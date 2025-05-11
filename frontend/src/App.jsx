@@ -8,10 +8,10 @@ import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
 
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuthStore } from './store/useAuthStore';
+import { useAuthStore } from '@/store/useAuthStore';
 
-import { useThemeStore } from "./store/useThemeStore";
-import { useBlockStore } from "./store/useBlockStore";
+import { useThemeStore } from "@/store/useThemeStore";
+import { useBlockStore } from "@/store/useBlockStore";
 import { useEffect } from "react";
 
 import { Loader } from "lucide-react";
