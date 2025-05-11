@@ -1,40 +1,37 @@
-# Build stage
-FROM node:18-alpine as build
+FROM node:18-alpine
 
-# Set working directory
+# Install Nginx and Supervisor
+RUN apk add --no-cache nginx supervisor
+
+# Set up working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install dependencies
 COPY package*.json ./
 COPY frontend/package*.json ./frontend/
+COPY backend/package*.json ./backend/
+RUN npm install --prefix backend
+RUN npm install --prefix frontend
 
-# Install dependencies
-RUN npm install
-RUN cd frontend && npm install
+# Copy source code
+COPY frontend ./frontend
+COPY backend ./backend
 
-# Copy all necessary frontend files
-COPY frontend/src ./frontend/src
-COPY frontend/index.html ./frontend/
-COPY frontend/vite.config.js ./frontend/
-COPY frontend/tailwind.config.js ./frontend/
-COPY frontend/postcss.config.js ./frontend/
-COPY frontend/eslint.config.js ./frontend/
-COPY frontend/public ./frontend/public
+# Build frontend
+RUN npm run build --prefix frontend
 
-# Build the app
-RUN npm run build
+# Copy built frontend to Nginx html directory
+RUN mkdir -p /var/www/html
+RUN cp -r ./frontend/dist/* /var/www/html/
 
-# Production stage
-FROM nginx:alpine
-
-# Copy built assets from build stage
-COPY --from=build /app/frontend/dist /usr/share/nginx/html
-
-# Copy nginx configuration
+# Copy Nginx config
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose port 80
-EXPOSE 80
+# Copy Supervisor config
+COPY supervisord.conf /etc/supervisord.conf
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"] 
+# Expose ports (80 for frontend, 5001 for backend example)
+EXPOSE 80 5001
+
+# Start both Nginx and backend using Supervisor
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"] 
