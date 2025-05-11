@@ -10,10 +10,14 @@ COPY frontend/package*.json ./
 # Install frontend dependencies
 RUN npm install
 
-# Copy frontend source code
+# Copy all necessary frontend files
 COPY frontend/src ./src
 COPY frontend/index.html ./
 COPY frontend/vite.config.js ./
+COPY frontend/tailwind.config.js ./
+COPY frontend/postcss.config.js ./
+COPY frontend/eslint.config.js ./
+COPY frontend/public ./public
 
 # Build the app
 RUN npm run build
