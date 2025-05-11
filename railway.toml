@@ -6,5 +6,5 @@ buildCommand = "cd frontend && npm install && npm run build"
 startCommand = "cd frontend && npx serve -s dist"
 healthcheckPath = "/"
 healthcheckTimeout = 100
-restartPolicyType = "on-failure"
+restartPolicyType = "always"
 restartPolicyMaxRetries = 10 
