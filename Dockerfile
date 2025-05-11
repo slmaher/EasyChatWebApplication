@@ -2,17 +2,18 @@
 FROM node:18-alpine as build
 
 # Set working directory
-WORKDIR /app
+WORKDIR /app/frontend
 
 # Copy frontend package files
-COPY frontend/package*.json ./frontend/
+COPY frontend/package*.json ./
 
 # Install frontend dependencies
-WORKDIR /app/frontend
 RUN npm install
 
 # Copy frontend source code
-COPY frontend/ .
+COPY frontend/src ./src
+COPY frontend/index.html ./
+COPY frontend/vite.config.js ./
 
 # Build the app
 RUN npm run build
