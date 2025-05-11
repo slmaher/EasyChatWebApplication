@@ -2,22 +2,24 @@
 FROM node:18-alpine as build
 
 # Set working directory
-WORKDIR /app/frontend
+WORKDIR /app
 
-# Copy frontend package files
-COPY frontend/package*.json ./
+# Copy package files
+COPY package*.json ./
+COPY frontend/package*.json ./frontend/
 
-# Install frontend dependencies
+# Install dependencies
 RUN npm install
+RUN cd frontend && npm install
 
 # Copy all necessary frontend files
-COPY frontend/src ./src
-COPY frontend/index.html ./
-COPY frontend/vite.config.js ./
-COPY frontend/tailwind.config.js ./
-COPY frontend/postcss.config.js ./
-COPY frontend/eslint.config.js ./
-COPY frontend/public ./public
+COPY frontend/src ./frontend/src
+COPY frontend/index.html ./frontend/
+COPY frontend/vite.config.js ./frontend/
+COPY frontend/tailwind.config.js ./frontend/
+COPY frontend/postcss.config.js ./frontend/
+COPY frontend/eslint.config.js ./frontend/
+COPY frontend/public ./frontend/public
 
 # Build the app
 RUN npm run build
