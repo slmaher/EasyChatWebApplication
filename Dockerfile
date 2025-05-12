@@ -6,16 +6,18 @@ RUN apk add --no-cache nginx supervisor
 # Set up working directory
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Copy package files
 COPY package*.json ./
 COPY frontend/package*.json ./frontend/
 COPY backend/package*.json ./backend/
-RUN npm install --prefix backend
-RUN npm install --prefix frontend
 
-# Copy source code
+# Copy all source code (including backend before npm install)
 COPY frontend ./frontend
 COPY backend ./backend
+
+# Now install dependencies
+RUN npm install --prefix backend
+RUN npm install --prefix frontend
 
 # Build frontend
 RUN npm run build --prefix frontend
