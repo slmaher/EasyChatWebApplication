@@ -14,6 +14,7 @@ dotenv.config();
 const PORT = process.env.PORT || 3000;
 const __dirname = path.resolve();
 
+// Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
@@ -24,10 +25,17 @@ app.use(
   })
 );
 
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/blocks", blockRoutes);
 
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
+// Serve static files in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
   app.get("*", (req, res) => {
@@ -35,6 +43,7 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
+// Root endpoint
 app.get("/", (req, res) => {
   res.send("Backend is working!");
 });
@@ -46,6 +55,9 @@ if (process.env.NODE_ENV !== "production") {
     connectDB();
   });
 }
+
+// Connect to database
+connectDB();
 
 // Export the Express app for Vercel
 export default app;
