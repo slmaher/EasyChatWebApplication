@@ -35,29 +35,26 @@ app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-// Serve static files in production
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
-  });
-}
-
 // Root endpoint
 app.get("/", (req, res) => {
-  res.send("Backend is working!");
+  res.status(200).json({ message: "Backend is working!" });
 });
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: "Something went wrong!" });
+});
+
+// Connect to database
+connectDB().catch(console.error);
 
 // Only start the server if we're not in a serverless environment
 if (process.env.NODE_ENV !== "production") {
   server.listen(PORT, () => {
     console.log("server is running on PORT:" + PORT);
-    connectDB();
   });
 }
-
-// Connect to database
-connectDB();
 
 // Export the Express app for Vercel
 export default app;
