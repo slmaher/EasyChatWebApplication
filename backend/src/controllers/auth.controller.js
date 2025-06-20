@@ -89,78 +89,74 @@ export const logout = (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { profilePic } = req.body;
     const userId = req.user._id;
+    const updateFields = {};
 
-    if (!profilePic) {
-      return res.status(400).json({ message: "Profile pic is required" });
+    // Handle profilePic update if present
+    if (req.body.profilePic) {
+      try {
+        // Log Cloudinary configuration
+        console.log('Cloudinary Config:', {
+          cloudName: process.env.CLOUDINARY_CLOUD_NAME ? 'Set' : 'Not Set',
+          apiKey: process.env.CLOUDINARY_API_KEY ? 'Set' : 'Not Set',
+          apiSecret: process.env.CLOUDINARY_API_SECRET ? 'Set' : 'Not Set'
+        });
+
+        // Ensure we have the base64 data
+        const base64Data = req.body.profilePic.includes('base64,') ? req.body.profilePic.split('base64,')[1] : req.body.profilePic;
+
+        // Upload to Cloudinary with proper options
+        const uploadResponse = await cloudinary.uploader.upload(
+          `data:image/jpeg;base64,${base64Data}`,
+          {
+            folder: 'profile_pics',
+            resource_type: 'auto',
+            format: 'jpg',
+            transformation: [
+              { width: 500, height: 500, crop: 'fill' },
+              { quality: 'auto' }
+            ],
+            timeout: 60000 // Increase timeout to 60 seconds
+          }
+        );
+
+        if (!uploadResponse || !uploadResponse.secure_url) {
+          throw new Error('Failed to get secure URL from Cloudinary');
+        }
+
+        updateFields.profilePic = uploadResponse.secure_url;
+      } catch (uploadError) {
+        console.error('Detailed upload error:', uploadError);
+        console.error('Detailed upload error (stringified):', JSON.stringify(uploadError, null, 2));
+        return res.status(500).json({ 
+          message: "Failed to upload image",
+          error: uploadError.message 
+        });
+      }
     }
 
-    console.log('Starting profile update for user:', userId);
+    // Handle preferredLanguage update if present
+    if (req.body.preferredLanguage) {
+      updateFields.preferredLanguage = req.body.preferredLanguage;
+    }
 
-    try {
-      // Log Cloudinary configuration
-      console.log('Cloudinary Config:', {
-        cloudName: process.env.CLOUDINARY_CLOUD_NAME ? 'Set' : 'Not Set',
-        apiKey: process.env.CLOUDINARY_API_KEY ? 'Set' : 'Not Set',
-        apiSecret: process.env.CLOUDINARY_API_SECRET ? 'Set' : 'Not Set'
-      });
-
-      // Ensure we have the base64 data
-      const base64Data = profilePic.includes('base64,') ? profilePic.split('base64,')[1] : profilePic;
-
-      // Upload to Cloudinary with proper options
-      const uploadResponse = await cloudinary.uploader.upload(
-        `data:image/jpeg;base64,${base64Data}`,
-        {
-          folder: 'profile_pics',
-          resource_type: 'auto',
-          format: 'jpg',
-          transformation: [
-            { width: 500, height: 500, crop: 'fill' },
-            { quality: 'auto' }
-          ],
-          timeout: 60000 // Increase timeout to 60 seconds
-        }
-      );
-
-      if (!uploadResponse || !uploadResponse.secure_url) {
-        throw new Error('Failed to get secure URL from Cloudinary');
-      }
-
-      console.log('Upload successful, URL:', uploadResponse.secure_url);
-
+    if (Object.keys(updateFields).length > 0) {
       const updatedUser = await User.findByIdAndUpdate(
         userId,
-        { profilePic: uploadResponse.secure_url },
+        updateFields,
         { new: true }
       ).select('-password');
-
       if (!updatedUser) {
-        console.log('User not found:', userId);
         return res.status(404).json({ message: "User not found" });
       }
-
-      console.log('Profile updated successfully');
-      res.status(200).json(updatedUser);
-    } catch (uploadError) {
-      console.error('Detailed upload error:', uploadError);
-      console.error('Detailed upload error (stringified):', JSON.stringify(uploadError, null, 2));
-      return res.status(500).json({ 
-        message: "Failed to upload image",
-        error: uploadError.message 
-      });
+      return res.status(200).json(updatedUser);
     }
+
+    // If no valid fields provided
+    return res.status(400).json({ message: "No valid fields to update" });
   } catch (error) {
-    console.error('Main error:', {
-      message: error.message,
-      name: error.name,
-      stack: error.stack
-    });
-    res.status(500).json({ 
-      message: "Internal server error",
-      error: error.message 
-    });
+    console.error('Error in updateProfile:', error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
 

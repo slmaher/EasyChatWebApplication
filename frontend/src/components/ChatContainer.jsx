@@ -88,6 +88,17 @@ const ChatContainer = () => {
                 />
               )}
               {message.text && <p>{message.text}</p>}
+              {message.translatedText && message.translatedTo === authUser?.preferredLanguage && (
+                <div style={{ color: '#888', fontStyle: 'italic', fontSize: '0.95em', marginTop: 4 }}>
+                  {message.translatedText}
+                  <div style={{ fontSize: '0.8em', color: '#aaa' }}>
+                    {authUser?.preferredLanguage === 'ar' ? 'مترجم بواسطة الذكاء الاصطناعي' : 
+                     authUser?.preferredLanguage === 'fr' ? 'Traduit par IA' :
+                     authUser?.preferredLanguage === 'es' ? 'Traducido por IA' :
+                     'Translated by AI'}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ))}

@@ -9,6 +9,14 @@ const ProfilePage = () => {
   const [selectedImg, setSelectedImg] = useState(null);
   const [tempImg, setTempImg] = useState(null);
 
+  const languages = [
+    { code: "en", label: "English" },
+    { code: "ar", label: "Arabic" },
+    { code: "fr", label: "French" },
+    { code: "es", label: "Spanish" },
+    // Add more as needed
+  ];
+
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -175,6 +183,24 @@ const ProfilePage = () => {
               <p className="px-4 py-2.5 bg-base-200 rounded-lg border">
                 {authUser?.email}
               </p>
+            </div>
+
+            {/* Preferred Language Selector */}
+            <div className="space-y-1.5">
+              <div className="text-sm text-zinc-400 flex items-center gap-2">
+                <span role="img" aria-label="language">🌐</span>
+                Preferred Language
+              </div>
+              <select
+                className="px-4 py-2.5 bg-base-200 rounded-lg border w-full"
+                value={authUser?.preferredLanguage || "en"}
+                onChange={e => updateProfile({ preferredLanguage: e.target.value })}
+                disabled={isUpdatingProfile}
+              >
+                {languages.map(lang => (
+                  <option key={lang.code} value={lang.code}>{lang.label}</option>
+                ))}
+              </select>
             </div>
           </div>
 

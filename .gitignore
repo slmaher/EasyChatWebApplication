@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 
 .env
+  # Ignore environment variables
+  .env
+  backend/.env
+  frontend/.env

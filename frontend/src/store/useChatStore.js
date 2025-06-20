@@ -58,21 +58,17 @@ export const useChatStore = create((set, get) => ({
     const socket = useAuthStore.getState().socket;
 
     socket.on("newMessage", (newMessage) => {
-      const isMessageSentFromSelectedUser =
-        newMessage.senderId === selectedUser._id;
-      if (!isMessageSentFromSelectedUser) {
+      const { selectedUser, messages } = get();
+      if (selectedUser && newMessage.senderId === selectedUser._id) {
+        set({ messages: [...messages, newMessage] });
+      } else {
         set((state) => ({
           unreadMessages: {
             ...state.unreadMessages,
             [newMessage.senderId]: (state.unreadMessages[newMessage.senderId] || 0) + 1,
           },
         }));
-        return;
       }
-
-      set({
-        messages: [...get().messages, newMessage],
-      });
     });
   },
 
@@ -104,19 +100,48 @@ export const useChatStore = create((set, get) => ({
     if (!socket) return;
 
     socket.off("newMessage"); // Prevent duplicate listeners
+    socket.off("messageUpdated"); // Prevent duplicate listeners
 
     socket.on("newMessage", (newMessage) => {
-      console.log("Received new message:", newMessage); // Debug log
+      console.log("=== FRONTEND MESSAGE RECEIVED ===");
+      console.log("Received new message:", newMessage);
+      console.log("Message text:", newMessage.text);
+      console.log("Message length:", newMessage.text?.length || 0);
+      console.log("Current selectedUser:", selectedUser);
+      console.log("Message senderId:", newMessage.senderId);
+      console.log("SelectedUser _id:", selectedUser?._id);
+      
       const { selectedUser, messages } = get();
       if (selectedUser && newMessage.senderId === selectedUser._id) {
+        console.log("✅ Adding message to current chat");
         set({
           messages: [...messages, newMessage],
+        });
+      } else {
+        console.log("✅ Adding to unread messages for:", newMessage.senderId);
+        set((state) => ({
+          unreadMessages: {
+            ...state.unreadMessages,
+            [newMessage.senderId]: (state.unreadMessages[newMessage.senderId] || 0) + 1,
+          },
+        }));
+      }
+    });
+
+    socket.on("messageUpdated", (updatedMessage) => {
+      console.log("Message updated with translation:", updatedMessage);
+      const { selectedUser, messages } = get();
+      if (selectedUser && updatedMessage.senderId === selectedUser._id) {
+        set({
+          messages: messages.map(msg => 
+            msg._id === updatedMessage._id ? updatedMessage : msg
+          ),
         });
       } else {
         set((state) => ({
           unreadMessages: {
             ...state.unreadMessages,
-            [newMessage.senderId]: (state.unreadMessages[newMessage.senderId] || 0) + 1,
+            [updatedMessage.senderId]: (state.unreadMessages[updatedMessage.senderId] || 0) + 1,
           },
         }));
       }
