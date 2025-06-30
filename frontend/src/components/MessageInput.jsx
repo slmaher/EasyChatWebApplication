@@ -1,5 +1,4 @@
-import React from "react";
-import { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { Image, Send, X } from "lucide-react";
 import toast from "react-hot-toast";
@@ -8,7 +7,11 @@ const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
-  const { sendMessage } = useChatStore();
+  const { sendMessage, setTyping, setStopTyping } = useChatStore();
+  const { selectedUser } = useChatStore();
+
+  // Debounce typing event
+  const typingTimeoutRef = useRef(null);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -28,6 +31,25 @@ const MessageInput = () => {
     setImagePreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  const handleInputChange = (e) => {
+    setText(e.target.value);
+    if (selectedUser) {
+      setTyping(selectedUser._id);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        setStopTyping(selectedUser._id);
+      }, 1200);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current && selectedUser) {
+        setStopTyping(selectedUser._id);
+      }
+    };
+  }, [selectedUser]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -77,7 +99,7 @@ const MessageInput = () => {
             className="w-full input input-bordered rounded-lg input-sm sm:input-md"
             placeholder="Type a message..."
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={handleInputChange}
           />
           <input
             type="file"

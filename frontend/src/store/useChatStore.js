@@ -10,6 +10,8 @@ export const useChatStore = create((set, get) => ({
   isUsersLoading: false,
   isMessagesLoading: false,
   unreadMessages: {},
+  typingUsers: {},
+  messagesByUser: {},
 
   getUsers: async () => {
     set({ isUsersLoading: true });
@@ -24,24 +26,60 @@ export const useChatStore = create((set, get) => ({
   },
 
   getMessages: async (userId) => {
+    const { messagesByUser } = get();
+    if (messagesByUser[userId]) {
+      set({ messages: messagesByUser[userId], isMessagesLoading: false });
+      return;
+    }
     set({ isMessagesLoading: true });
     try {
-      const res = await axiosInstance.get(`/messages/${userId}`);
-      set({ messages: res.data });
+      const res = await axiosInstance.get(`/messages/${userId}?limit=15&skip=0`);
+      set((state) => ({
+        messages: res.data,
+        messagesByUser: { ...state.messagesByUser, [userId]: res.data },
+      }));
     } catch (error) {
       toast.error(error.response.data.message);
     } finally {
       set({ isMessagesLoading: false });
     }
   },
+
+  loadMoreMessages: async (userId) => {
+    const { messagesByUser } = get();
+    const currentMessages = messagesByUser[userId] || [];
+    try {
+      const res = await axiosInstance.get(`/messages/${userId}?limit=15&skip=${currentMessages.length}`);
+      if (res.data.length > 0) {
+        set((state) => ({
+          messages: [...res.data, ...state.messages],
+          messagesByUser: {
+            ...state.messagesByUser,
+            [userId]: [...res.data, ...(state.messagesByUser[userId] || [])],
+          },
+        }));
+      }
+      return res.data.length;
+    } catch (error) {
+      toast.error(error.response.data.message);
+      return 0;
+    }
+  },
+
   sendMessage: async (messageData) => {
-    const { selectedUser, messages } = get();
+    const { selectedUser, messages, messagesByUser } = get();
     try {
       const res = await axiosInstance.post(
         `/messages/send/${selectedUser._id}`,
         messageData
       );
-      set({ messages: [...messages, res.data] });
+      set((state) => ({
+        messages: [...state.messages, res.data],
+        messagesByUser: {
+          ...state.messagesByUser,
+          [selectedUser._id]: [...(state.messagesByUser[selectedUser._id] || []), res.data],
+        },
+      }));
     } catch (error) {
       if (error.response?.status === 403) {
         toast.error(`Cannot send message: ${selectedUser.fullName} is blocked`);
@@ -58,9 +96,15 @@ export const useChatStore = create((set, get) => ({
     const socket = useAuthStore.getState().socket;
 
     socket.on("newMessage", (newMessage) => {
-      const { selectedUser, messages } = get();
+      const { selectedUser, messages, messagesByUser } = get();
       if (selectedUser && newMessage.senderId === selectedUser._id) {
-        set({ messages: [...messages, newMessage] });
+        set((state) => ({
+          messages: [...state.messages, newMessage],
+          messagesByUser: {
+            ...state.messagesByUser,
+            [selectedUser._id]: [...(state.messagesByUser[selectedUser._id] || []), newMessage],
+          },
+        }));
       } else {
         set((state) => ({
           unreadMessages: {
@@ -95,30 +139,41 @@ export const useChatStore = create((set, get) => ({
     });
   },
 
+  setTyping: (receiverId) => {
+    const socket = useAuthStore.getState().socket;
+    const { authUser } = useAuthStore.getState();
+    if (socket && receiverId && authUser) {
+      socket.emit("typing", { receiverId });
+    }
+  },
+  setStopTyping: (receiverId) => {
+    const socket = useAuthStore.getState().socket;
+    const { authUser } = useAuthStore.getState();
+    if (socket && receiverId && authUser) {
+      socket.emit("stopTyping", { receiverId });
+    }
+  },
+
   initSocketListeners: () => {
     const socket = useAuthStore.getState().socket;
     if (!socket) return;
 
     socket.off("newMessage"); // Prevent duplicate listeners
     socket.off("messageUpdated"); // Prevent duplicate listeners
+    socket.off("typing");
+    socket.off("stopTyping");
 
     socket.on("newMessage", (newMessage) => {
-      console.log("=== FRONTEND MESSAGE RECEIVED ===");
-      console.log("Received new message:", newMessage);
-      console.log("Message text:", newMessage.text);
-      console.log("Message length:", newMessage.text?.length || 0);
-      console.log("Current selectedUser:", selectedUser);
-      console.log("Message senderId:", newMessage.senderId);
-      console.log("SelectedUser _id:", selectedUser?._id);
-      
-      const { selectedUser, messages } = get();
+      const { selectedUser, messages, messagesByUser } = get();
       if (selectedUser && newMessage.senderId === selectedUser._id) {
-        console.log("✅ Adding message to current chat");
-        set({
-          messages: [...messages, newMessage],
-        });
+        set((state) => ({
+          messages: [...state.messages, newMessage],
+          messagesByUser: {
+            ...state.messagesByUser,
+            [selectedUser._id]: [...(state.messagesByUser[selectedUser._id] || []), newMessage],
+          },
+        }));
       } else {
-        console.log("✅ Adding to unread messages for:", newMessage.senderId);
         set((state) => ({
           unreadMessages: {
             ...state.unreadMessages,
@@ -129,14 +184,15 @@ export const useChatStore = create((set, get) => ({
     });
 
     socket.on("messageUpdated", (updatedMessage) => {
-      console.log("Message updated with translation:", updatedMessage);
-      const { selectedUser, messages } = get();
+      const { selectedUser, messages, messagesByUser } = get();
       if (selectedUser && updatedMessage.senderId === selectedUser._id) {
-        set({
-          messages: messages.map(msg => 
-            msg._id === updatedMessage._id ? updatedMessage : msg
-          ),
-        });
+        set((state) => ({
+          messages: state.messages.map(msg => msg._id === updatedMessage._id ? updatedMessage : msg),
+          messagesByUser: {
+            ...state.messagesByUser,
+            [selectedUser._id]: (state.messagesByUser[selectedUser._id] || []).map(msg => msg._id === updatedMessage._id ? updatedMessage : msg),
+          },
+        }));
       } else {
         set((state) => ({
           unreadMessages: {
@@ -145,6 +201,20 @@ export const useChatStore = create((set, get) => ({
           },
         }));
       }
+    });
+
+    socket.on("typing", ({ senderId }) => {
+      set((state) => ({
+        typingUsers: { ...state.typingUsers, [senderId]: true },
+      }));
+    });
+
+    socket.on("stopTyping", ({ senderId }) => {
+      set((state) => {
+        const updated = { ...state.typingUsers };
+        delete updated[senderId];
+        return { typingUsers: updated };
+      });
     });
   },
 }));
