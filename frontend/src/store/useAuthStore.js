@@ -28,6 +28,7 @@ export const useAuthStore = create((set, get) => ({
     } catch (error) {
       console.log("Error in checkAuth:", error);
       set({ authUser: null });
+      toast.error(error.response?.data?.message || error.message || "An error occurred");
     } finally {
       set({ isCheckingAuth: false });
     }
@@ -42,7 +43,7 @@ export const useAuthStore = create((set, get) => ({
       get().connectSocket();
       useChatStore.getState().initSocketListeners();
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || error.message || "An error occurred");
     } finally {
       set({ isSigningUp: false });
     }
@@ -58,7 +59,7 @@ export const useAuthStore = create((set, get) => ({
       get().connectSocket();
       useChatStore.getState().initSocketListeners();
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || error.message || "An error occurred");
     } finally {
       set({ isLoggingIn: false });
     }
@@ -71,7 +72,7 @@ export const useAuthStore = create((set, get) => ({
       toast.success("Logged out successfully");
       get().disconnectSocket();
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || error.message || "An error occurred");
     }
   },
 
@@ -84,7 +85,7 @@ export const useAuthStore = create((set, get) => ({
       useChatStore.getState().getUsers();
     } catch (error) {
       console.log("error in update profile:", error);
-      toast.error(error.response?.data?.message || "Failed to update profile picture. Please try again.");
+      toast.error(error.response?.data?.message || error.message || "An error occurred");
     } finally {
       set({ isUpdatingProfile: false });
     }
