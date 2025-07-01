@@ -8,8 +8,9 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: ["http://localhost:5173",
-      "https://easy-chat-web-application-1dwrimgwn-slmahers-projects.vercel.app"
-    ],
+      "https://easy-chat-web-application-1dwrimgwn-slmahers-projects.vercel.app",
+        "https://easy-chat-web-application.vercel.app"
+      ],
   },
   maxHttpBufferSize: 1e8, // 100MB buffer size
   pingTimeout: 60000,
