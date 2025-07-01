@@ -13,6 +13,8 @@ const MessageInput = () => {
   // Debounce typing event
   const typingTimeoutRef = useRef(null);
 
+  const [sending, setSending] = useState(false);
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file.type.startsWith("image/")) {
@@ -54,19 +56,20 @@ const MessageInput = () => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!text.trim() && !imagePreview) return;
-
+    if (sending) return;
+    setSending(true);
     try {
       await sendMessage({
         text: text.trim(),
         image: imagePreview,
       });
-
-      // Clear form
       setText("");
       setImagePreview(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
       console.error("Failed to send message:", error);
+    } finally {
+      setSending(false);
     }
   };
 
@@ -121,7 +124,7 @@ const MessageInput = () => {
         <button
           type="submit"
           className="btn btn-sm btn-circle"
-          disabled={!text.trim() && !imagePreview}
+          disabled={(!text.trim() && !imagePreview) || sending}
         >
           <Send size={22} />
         </button>

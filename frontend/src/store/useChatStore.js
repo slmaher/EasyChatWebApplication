@@ -73,13 +73,17 @@ export const useChatStore = create((set, get) => ({
         `/messages/send/${selectedUser._id}`,
         messageData
       );
-      set((state) => ({
-        messages: [...state.messages, res.data],
-        messagesByUser: {
-          ...state.messagesByUser,
-          [selectedUser._id]: [...(state.messagesByUser[selectedUser._id] || []), res.data],
-        },
-      }));
+      set((state) => {
+        const alreadyExists = state.messages.some(msg => msg._id === res.data._id);
+        if (alreadyExists) return state;
+        return {
+          messages: [...state.messages, res.data],
+          messagesByUser: {
+            ...state.messagesByUser,
+            [selectedUser._id]: [...(state.messagesByUser[selectedUser._id] || []), res.data],
+          },
+        };
+      });
     } catch (error) {
       if (error.response?.status === 403) {
         toast.error(`Cannot send message: ${selectedUser.fullName} is blocked`);
@@ -97,6 +101,8 @@ export const useChatStore = create((set, get) => ({
 
     socket.on("newMessage", (newMessage) => {
       const { selectedUser, messages, messagesByUser } = get();
+      const alreadyExists = messages.some(msg => msg._id === newMessage._id);
+      if (alreadyExists) return;
       if (selectedUser && newMessage.senderId === selectedUser._id) {
         set((state) => ({
           messages: [...state.messages, newMessage],
@@ -165,6 +171,8 @@ export const useChatStore = create((set, get) => ({
 
     socket.on("newMessage", (newMessage) => {
       const { selectedUser, messages, messagesByUser } = get();
+      const alreadyExists = messages.some(msg => msg._id === newMessage._id);
+      if (alreadyExists) return;
       if (selectedUser && newMessage.senderId === selectedUser._id) {
         set((state) => ({
           messages: [...state.messages, newMessage],
