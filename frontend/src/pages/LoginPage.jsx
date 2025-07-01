@@ -122,7 +122,7 @@ const LoginPage = () => {
           {/* Image */}
           <div className="hidden lg:block p-12">
             <img
-              src="public/avatar.png"
+              src="/avatar.png"
               alt="Login illustration"
               className="w-[400px] h-auto object-contain rounded-lg"
             />
