@@ -187,7 +187,7 @@ const ProfilePage = () => {
 
             {/* Preferred Language Selector */}
             <div className="space-y-1.5">
-              <div className="text-sm text-zinc-400 flex items-center gap-2">
+              <div className="text-sm text-zinc-400 flex items-center gap-">
                 <span role="img" aria-label="language">🌐</span>
                 Preferred Language
               </div>
