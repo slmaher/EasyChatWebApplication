@@ -10,6 +10,7 @@ import { connectDB } from "./lib/db.js";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import blockRoutes from "./routes/block.route.js";
+import e2eeRoutes from "./routes/e2ee.route.js";
 import { app, server } from "./lib/socket.js";
 
 dotenv.config();
@@ -37,6 +38,7 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/blocks", blockRoutes);
+app.use("/api/e2ee", e2eeRoutes);
 
 app.get("/", (req, res) => {
   res.send("Backend is working!");

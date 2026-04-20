@@ -2,9 +2,7 @@ import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
 import BlockedUser from "../models/blockedUser.model.js";
 
-import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId, io, userSocketMap } from "../lib/socket.js";
-import { detectLanguage, translateText } from "../lib/utils.js";
 
 export const getUsersForSidebar = async (req, res) => {
   try {
@@ -37,7 +35,7 @@ export const getUsersForSidebar = async (req, res) => {
           isBlocked: blockedUserIds.includes(user._id.toString()),
           lastMessage: lastMessage
             ? {
-                text: lastMessage.text,
+                text: lastMessage.encryption ? "Encrypted message" : lastMessage.text,
                 createdAt: lastMessage.createdAt,
               }
             : null,
@@ -78,16 +76,25 @@ export const getMessages = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
   try {
-    const { text, image } = req.body;
+    const { encryption } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
 
     console.log("=== MESSAGE SEND DEBUG ===");
     console.log("Sender ID:", senderId);
     console.log("Receiver ID:", receiverId);
-    console.log("Message text:", text);
-    console.log("Message length:", text?.length || 0);
+    console.log("Encryption payload present:", Boolean(encryption));
     console.log("All connected users:", Object.keys(userSocketMap));
+
+    if (
+      !encryption ||
+      !Array.isArray(encryption.recipientEnvelopes) ||
+      !encryption.recipientEnvelopes.length ||
+      !encryption.senderEnvelope ||
+      !encryption.senderDeviceId
+    ) {
+      return res.status(400).json({ error: "Invalid encrypted payload" });
+    }
 
     // Check if either user has blocked the other
     const isBlocked = await BlockedUser.findOne({
@@ -102,18 +109,11 @@ export const sendMessage = async (req, res) => {
       return res.status(403).json({ error: "Cannot send message to blocked user" });
     }
 
-    let imageUrl;
-    if (image) {
-      const uploadResponse = await cloudinary.uploader.upload(image);
-      imageUrl = uploadResponse.secure_url;
-    }
-
-    // Create and save message first (without translation)
+    // Store encrypted envelopes only. Server must not receive plaintext.
     const newMessage = new Message({
       senderId,
       receiverId,
-      text,
-      image: imageUrl,
+      encryption,
     });
 
     await newMessage.save();
@@ -149,43 +149,6 @@ export const sendMessage = async (req, res) => {
       }
     } else {
       console.log("❌ Sender not online:", senderId);
-    }
-
-    // Now handle translation in the background (non-blocking)
-    if (text) {
-      setTimeout(async () => {
-        try {
-          console.log("Starting translation for message:", newMessage._id);
-          const detectedLanguage = await detectLanguage(text);
-          const receiver = await User.findById(receiverId);
-          const preferredLanguage = receiver?.preferredLanguage || "en";
-          
-          if (detectedLanguage !== preferredLanguage) {
-            const translatedText = await translateText(text, preferredLanguage);
-            
-            // Update the message with translation
-            const updatedMessage = await Message.findByIdAndUpdate(
-              newMessage._id,
-              {
-                detectedLanguage,
-                translatedText,
-                translatedTo: preferredLanguage,
-              },
-              { new: true }
-            );
-
-            // Emit updated message to both users
-            if (receiverSocketId) {
-              io.to(receiverSocketId).emit("messageUpdated", updatedMessage);
-            }
-            if (senderSocketId) {
-              io.to(senderSocketId).emit("messageUpdated", updatedMessage);
-            }
-          }
-        } catch (error) {
-          console.error("Translation failed for message:", newMessage._id, error);
-        }
-      }, 100); // Small delay to ensure message is sent first
     }
 
     res.status(201).json(newMessage);

@@ -2,6 +2,13 @@ import { create } from "zustand";
 import toast from "react-hot-toast";
 import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
+import { decryptMessageForCurrentDevice, encryptPayloadForUser } from "../lib/e2ee";
+
+const withDisplayFields = (message) => ({
+  ...message,
+  text: message?.decrypted?.text || "",
+  image: message?.decrypted?.image || null,
+});
 
 export const useChatStore = create((set, get) => ({
   messages: [],
@@ -34,9 +41,13 @@ export const useChatStore = create((set, get) => ({
     set({ isMessagesLoading: true });
     try {
       const res = await axiosInstance.get(`/messages/${userId}?limit=15&skip=0`);
+      const { authUser } = useAuthStore.getState();
+      const decryptedMessages = await Promise.all(
+        res.data.map(async (message) => withDisplayFields(await decryptMessageForCurrentDevice(message, authUser._id)))
+      );
       set((state) => ({
-        messages: res.data,
-        messagesByUser: { ...state.messagesByUser, [userId]: res.data },
+        messages: decryptedMessages,
+        messagesByUser: { ...state.messagesByUser, [userId]: decryptedMessages },
       }));
     } catch (error) {
       toast.error(error.response.data.message);
@@ -50,16 +61,20 @@ export const useChatStore = create((set, get) => ({
     const currentMessages = messagesByUser[userId] || [];
     try {
       const res = await axiosInstance.get(`/messages/${userId}?limit=15&skip=${currentMessages.length}`);
-      if (res.data.length > 0) {
+      const { authUser } = useAuthStore.getState();
+      const decryptedMessages = await Promise.all(
+        res.data.map(async (message) => withDisplayFields(await decryptMessageForCurrentDevice(message, authUser._id)))
+      );
+      if (decryptedMessages.length > 0) {
         set((state) => ({
-          messages: [...res.data, ...state.messages],
+          messages: [...decryptedMessages, ...state.messages],
           messagesByUser: {
             ...state.messagesByUser,
-            [userId]: [...res.data, ...(state.messagesByUser[userId] || [])],
+            [userId]: [...decryptedMessages, ...(state.messagesByUser[userId] || [])],
           },
         }));
       }
-      return res.data.length;
+      return decryptedMessages.length;
     } catch (error) {
       toast.error(error.response.data.message);
       return 0;
@@ -69,24 +84,46 @@ export const useChatStore = create((set, get) => ({
   sendMessage: async (messageData) => {
     const { selectedUser, messages, messagesByUser } = get();
     try {
+      const { authUser } = useAuthStore.getState();
+      const encryption = await encryptPayloadForUser(
+        selectedUser._id,
+        {
+          text: messageData?.text || "",
+          image: messageData?.image || null,
+        },
+        authUser._id
+      );
+
       const res = await axiosInstance.post(
         `/messages/send/${selectedUser._id}`,
-        messageData
+        { encryption }
       );
+
+      const decryptedMessage = withDisplayFields(
+        await decryptMessageForCurrentDevice(res.data, authUser._id)
+      );
+
       set((state) => {
-        const alreadyExists = state.messages.some(msg => msg._id === res.data._id);
+        const alreadyExists = state.messages.some(msg => msg._id === decryptedMessage._id);
         if (alreadyExists) return state;
         return {
-          messages: [...state.messages, res.data],
+          messages: [...state.messages, decryptedMessage],
           messagesByUser: {
             ...state.messagesByUser,
-            [selectedUser._id]: [...(state.messagesByUser[selectedUser._id] || []), res.data],
+            [selectedUser._id]: [...(state.messagesByUser[selectedUser._id] || []), decryptedMessage],
           },
         };
       });
     } catch (error) {
       if (error.response?.status === 403) {
         toast.error(`Cannot send message: ${selectedUser.fullName} is blocked`);
+      } else if (
+        error.response?.status === 404 &&
+        error.config?.url?.includes("/e2ee/prekey-bundle/")
+      ) {
+        toast.error(
+          `${selectedUser.fullName} has not set up encrypted chat yet. Ask them to log in once, then try again.`
+        );
       } else {
         toast.error(error.response?.data?.message || "Failed to send message");
       }
@@ -100,25 +137,29 @@ export const useChatStore = create((set, get) => ({
     const socket = useAuthStore.getState().socket;
 
     socket.on("newMessage", (newMessage) => {
+      const { authUser } = useAuthStore.getState();
       const { selectedUser, messages, messagesByUser } = get();
       const alreadyExists = messages.some(msg => msg._id === newMessage._id);
       if (alreadyExists) return;
-      if (selectedUser && newMessage.senderId === selectedUser._id) {
-        set((state) => ({
-          messages: [...state.messages, newMessage],
-          messagesByUser: {
-            ...state.messagesByUser,
-            [selectedUser._id]: [...(state.messagesByUser[selectedUser._id] || []), newMessage],
-          },
-        }));
-      } else {
-        set((state) => ({
-          unreadMessages: {
-            ...state.unreadMessages,
-            [newMessage.senderId]: (state.unreadMessages[newMessage.senderId] || 0) + 1,
-          },
-        }));
-      }
+      decryptMessageForCurrentDevice(newMessage, authUser._id).then((decrypted) => {
+        const displayMessage = withDisplayFields(decrypted);
+        if (selectedUser && newMessage.senderId === selectedUser._id) {
+          set((state) => ({
+            messages: [...state.messages, displayMessage],
+            messagesByUser: {
+              ...state.messagesByUser,
+              [selectedUser._id]: [...(state.messagesByUser[selectedUser._id] || []), displayMessage],
+            },
+          }));
+        } else {
+          set((state) => ({
+            unreadMessages: {
+              ...state.unreadMessages,
+              [newMessage.senderId]: (state.unreadMessages[newMessage.senderId] || 0) + 1,
+            },
+          }));
+        }
+      });
     });
   },
 
@@ -170,25 +211,29 @@ export const useChatStore = create((set, get) => ({
     socket.off("stopTyping");
 
     socket.on("newMessage", (newMessage) => {
+      const { authUser } = useAuthStore.getState();
       const { selectedUser, messages, messagesByUser } = get();
       const alreadyExists = messages.some(msg => msg._id === newMessage._id);
       if (alreadyExists) return;
-      if (selectedUser && newMessage.senderId === selectedUser._id) {
-        set((state) => ({
-          messages: [...state.messages, newMessage],
-          messagesByUser: {
-            ...state.messagesByUser,
-            [selectedUser._id]: [...(state.messagesByUser[selectedUser._id] || []), newMessage],
-          },
-        }));
-      } else {
-        set((state) => ({
-          unreadMessages: {
-            ...state.unreadMessages,
-            [newMessage.senderId]: (state.unreadMessages[newMessage.senderId] || 0) + 1,
-          },
-        }));
-      }
+      decryptMessageForCurrentDevice(newMessage, authUser._id).then((decrypted) => {
+        const displayMessage = withDisplayFields(decrypted);
+        if (selectedUser && newMessage.senderId === selectedUser._id) {
+          set((state) => ({
+            messages: [...state.messages, displayMessage],
+            messagesByUser: {
+              ...state.messagesByUser,
+              [selectedUser._id]: [...(state.messagesByUser[selectedUser._id] || []), displayMessage],
+            },
+          }));
+        } else {
+          set((state) => ({
+            unreadMessages: {
+              ...state.unreadMessages,
+              [newMessage.senderId]: (state.unreadMessages[newMessage.senderId] || 0) + 1,
+            },
+          }));
+        }
+      });
     });
 
     socket.on("messageUpdated", (updatedMessage) => {

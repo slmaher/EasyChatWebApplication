@@ -3,6 +3,7 @@ import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import { useChatStore } from "./useChatStore.js";
+import { initializeE2EEForUser } from "../lib/e2ee.js";
 
 const BASE_URL = import.meta.env.MODE === "development"
   ? "http://localhost:5001"
@@ -23,6 +24,7 @@ export const useAuthStore = create((set, get) => ({
       const res = await axiosInstance.get("/auth/check");
 
       set({ authUser: res.data });
+      await initializeE2EEForUser(res.data._id);
       get().connectSocket();
       useChatStore.getState().initSocketListeners();
     } catch (error) {
@@ -39,6 +41,7 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.post("/auth/signup", data);
       set({ authUser: res.data });
+      await initializeE2EEForUser(res.data._id);
       toast.success("Account created successfully");
       get().connectSocket();
       useChatStore.getState().initSocketListeners();
@@ -54,6 +57,7 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.post("/auth/login", data);
       set({ authUser: res.data });
+      await initializeE2EEForUser(res.data._id);
       toast.success("Logged in successfully");
 
       get().connectSocket();
