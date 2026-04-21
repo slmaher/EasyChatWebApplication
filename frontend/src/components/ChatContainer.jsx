@@ -11,12 +11,13 @@ const ChatContainer = () => {
   const {
     messages,
     getMessages,
+    getGroupMessages,
     isMessagesLoading,
     selectedUser,
-    subscribeToMessages,
-    unsubscribeFromMessages,
+    selectedGroup,
     typingUsers,
     loadMoreMessages,
+    groupMessagesById,
   } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
@@ -24,17 +25,21 @@ const ChatContainer = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   useEffect(() => {
-    getMessages(selectedUser._id);
-
-    subscribeToMessages();
-
-    return () => unsubscribeFromMessages();
+    if (selectedGroup?._id) {
+      getGroupMessages(selectedGroup._id);
+    } else if (selectedUser?._id) {
+      getMessages(selectedUser._id);
+    }
   }, [
-    selectedUser._id,
+    selectedUser?._id,
+    selectedGroup?._id,
     getMessages,
-    subscribeToMessages,
-    unsubscribeFromMessages,
+    getGroupMessages,
   ]);
+
+  const activeMessages = selectedGroup?._id
+    ? groupMessagesById[selectedGroup._id] || []
+    : messages;
 
   useEffect(() => {
     if (messageEndRef.current && messages) {
@@ -48,6 +53,10 @@ const ChatContainer = () => {
       if (!messageListRef.current || isLoadingMore || isMessagesLoading) return;
       if (messageListRef.current.scrollTop === 0) {
         setIsLoadingMore(true);
+        if (selectedGroup?._id) {
+          setIsLoadingMore(false);
+          return;
+        }
         const loaded = await loadMoreMessages(selectedUser._id);
         setIsLoadingMore(false);
         // Maintain scroll position after loading more
@@ -59,7 +68,7 @@ const ChatContainer = () => {
     const ref = messageListRef.current;
     if (ref) ref.addEventListener("scroll", handleScroll);
     return () => { if (ref) ref.removeEventListener("scroll", handleScroll); };
-  }, [selectedUser, isLoadingMore, isMessagesLoading, loadMoreMessages]);
+  }, [selectedUser, selectedGroup, isLoadingMore, isMessagesLoading, loadMoreMessages]);
 
   if (isMessagesLoading) {
     return (
@@ -75,11 +84,11 @@ const ChatContainer = () => {
     <div className="flex-1 flex flex-col overflow-auto">
       <ChatHeader />
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={messageListRef}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-base-100/30" ref={messageListRef}>
         {isLoadingMore && (
           <div className="w-full text-center text-xs text-zinc-400 mb-2">Loading more...</div>
         )}
-        {messages.map((message) => (
+        {activeMessages.map((message) => (
           <div
             key={message._id}
             className={`chat ${
@@ -93,18 +102,20 @@ const ChatContainer = () => {
                   src={
                     message.senderId === authUser._id
                       ? authUser.profilePic || "/NoAvatar.png"
-                      : selectedUser.profilePic || "/NoAvatar.png"
+                      : selectedGroup?._id
+                        ? "/NoAvatar.png"
+                        : selectedUser.profilePic || "/NoAvatar.png"
                   }
                   alt="profile pic"
                 />
               </div>
             </div>
             <div className="chat-header mb-1">
-              <time className="text-xs opacity-50 ml-1">
+              <time className="text-xs opacity-50 ml-1 font-mono">
                 {formatDate(message.createdAt, { format: 'short' })} {formatMessageTime(message.createdAt)}
               </time>
             </div>
-            <div className="chat-bubble flex flex-col">
+            <div className="chat-bubble flex flex-col shadow-lg shadow-base-300/10 border border-base-300/40">
               {message.image && (
                 <img
                   src={message.image}
@@ -130,8 +141,8 @@ const ChatContainer = () => {
       </div>
 
       {/* Typing indicator */}
-      {selectedUser && typingUsers[selectedUser._id] && (
-        <div className="px-4 pb-2 mt-3 text-base text-zinc-500 animate-pulse" style={{ fontWeight: 500 }}>
+      {selectedUser && !selectedGroup && typingUsers[selectedUser._id] && (
+        <div className="px-4 pb-2 mt-3 text-base text-zinc-500 animate-pulse font-mono uppercase tracking-[0.14em] text-[11px]" style={{ fontWeight: 500 }}>
           {selectedUser.fullName} is typing...
         </div>
       )}

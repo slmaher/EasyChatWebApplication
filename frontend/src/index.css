@@ -1,2 +1,55 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap");
+
 @import "tailwindcss";
 @plugin "daisyui";
+
+html,
+body,
+#root {
+	min-height: 100%;
+}
+
+body {
+	font-family: "IBM Plex Sans", "Inter", sans-serif;
+	background:
+	  radial-gradient(circle at top right, hsl(var(--p) / 0.18) 0%, transparent 34%),
+	  radial-gradient(circle at bottom left, hsl(var(--s) / 0.14) 0%, transparent 32%),
+	  linear-gradient(160deg, hsl(var(--b2)) 0%, hsl(var(--b1)) 42%, hsl(var(--b2)) 100%);
+	color: hsl(var(--bc));
+}
+
+body::before,
+body::after {
+	content: "";
+	position: fixed;
+	inset: auto;
+	pointer-events: none;
+	z-index: -1;
+	border-radius: 9999px;
+	filter: blur(72px);
+	opacity: 0.28;
+}
+
+body::before {
+	width: min(45vw, 520px);
+	height: min(45vw, 520px);
+	top: -140px;
+	right: -110px;
+	background: radial-gradient(circle, hsl(var(--p)) 0%, transparent 70%);
+}
+
+body::after {
+	width: min(40vw, 460px);
+	height: min(40vw, 460px);
+	left: -100px;
+	bottom: -120px;
+	background: radial-gradient(circle, hsl(var(--s)) 0%, transparent 72%);
+}
+
+@media (max-width: 768px) {
+	body::before,
+	body::after {
+		opacity: 0.2;
+		filter: blur(56px);
+	}
+}

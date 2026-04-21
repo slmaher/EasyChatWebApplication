@@ -7,15 +7,16 @@ import { getReceiverSocketId, io, userSocketMap } from "../lib/socket.js";
 export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
-    
+
     // Get blocked users
-    const blockedUsers = await BlockedUser.find({ userId: loggedInUserId })
-      .select("blockedUserId");
-    const blockedUserIds = blockedUsers.map(block => block.blockedUserId);
+    const blockedUsers = await BlockedUser.find({
+      userId: loggedInUserId,
+    }).select("blockedUserId");
+    const blockedUserIds = blockedUsers.map((block) => block.blockedUserId);
 
     // Get all users except the logged-in user
     const users = await User.find({
-      _id: { $ne: loggedInUserId }
+      _id: { $ne: loggedInUserId },
     }).select("-password");
 
     // For each user, get the latest message between them and the logged-in user
@@ -35,12 +36,14 @@ export const getUsersForSidebar = async (req, res) => {
           isBlocked: blockedUserIds.includes(user._id.toString()),
           lastMessage: lastMessage
             ? {
-                text: lastMessage.encryption ? "Encrypted message" : lastMessage.text,
+                text: lastMessage.encryption
+                  ? "Encrypted message"
+                  : lastMessage.text,
                 createdAt: lastMessage.createdAt,
               }
             : null,
         };
-      })
+      }),
     );
 
     res.status(200).json(usersWithLastMessage);
@@ -100,13 +103,15 @@ export const sendMessage = async (req, res) => {
     const isBlocked = await BlockedUser.findOne({
       $or: [
         { userId: senderId, blockedUserId: receiverId },
-        { userId: receiverId, blockedUserId: senderId }
-      ]
+        { userId: receiverId, blockedUserId: senderId },
+      ],
     });
 
     if (isBlocked) {
       console.log("Message blocked - users are blocked");
-      return res.status(403).json({ error: "Cannot send message to blocked user" });
+      return res
+        .status(403)
+        .json({ error: "Cannot send message to blocked user" });
     }
 
     // Store encrypted envelopes only. Server must not receive plaintext.
@@ -127,33 +132,33 @@ export const sendMessage = async (req, res) => {
     console.log("Receiver Socket ID:", receiverSocketId);
     console.log("Sender Socket ID:", senderSocketId);
 
-    if (receiverSocketId) {
-      console.log("✅ Emitting to receiver:", receiverSocketId);
-      try {
-        io.to(receiverSocketId).emit("newMessage", newMessage);
-        console.log("✅ Message emitted to receiver successfully");
-      } catch (emitError) {
-        console.error("❌ Error emitting to receiver:", emitError);
-      }
-    } else {
+    const targetSocketIds = Array.from(
+      new Set([receiverSocketId, senderSocketId].filter(Boolean)),
+    );
+
+    if (!receiverSocketId) {
       console.log("❌ Receiver not online:", receiverId);
     }
 
-    if (senderSocketId) {
-      console.log("✅ Emitting to sender:", senderSocketId);
-      try {
-        io.to(senderSocketId).emit("newMessage", newMessage);
-        console.log("✅ Message emitted to sender successfully");
-      } catch (emitError) {
-        console.error("❌ Error emitting to sender:", emitError);
-      }
-    } else {
+    if (!senderSocketId) {
       console.log("❌ Sender not online:", senderId);
     }
+
+    targetSocketIds.forEach((socketId) => {
+      console.log("✅ Emitting to socket:", socketId);
+      try {
+        io.to(socketId).emit("newMessage", newMessage);
+        console.log("✅ Message emitted successfully");
+      } catch (emitError) {
+        console.error("❌ Error emitting message:", emitError);
+      }
+    });
 
     res.status(201).json(newMessage);
   } catch (error) {
     console.error("Error in sendMessage controller:", error);
-    res.status(500).json({ error: "Internal server error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal server error", details: error.message });
   }
 };

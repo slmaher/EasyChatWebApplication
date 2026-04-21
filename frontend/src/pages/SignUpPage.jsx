@@ -4,11 +4,11 @@ import { useAuthStore } from "../store/useAuthStore";
 import {
   Eye,
   EyeOff,
+  ShieldCheck,
   Loader2,
-  Lock,
+  LockKeyhole,
   Mail,
-  MessageSquare,
-  User,
+  UserCheck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -44,21 +44,20 @@ const SignUpPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-base-200 p-4 font-roboto">
-      <div className="bg-base-100 rounded-2xl shadow-xl overflow-hidden max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center bg-base-200 p-4 font-sans">
+      <div className="bg-base-100/95 border border-base-300 rounded-3xl shadow-2xl shadow-base-300/20 overflow-hidden max-w-md w-full backdrop-blur-xl">
         <div className="p-8 lg:p-12">
           <div className="space-y-8">
             {/* Logo */}
             <div className="text-center mb-8">
               <div className="flex flex-col items-center gap-2 group">
                 <div
-                  className="w-12 h-12 rounded-xl bg-[#FFB800]/10 flex items-center justify-center group-hover:bg-[#FFB800]/20
-                  transition-colors"
+                  className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors ring-1 ring-primary/15"
                 >
-                  <MessageSquare className="w-6 h-6 text-[#FFB800]" />
+                  <ShieldCheck className="w-7 h-7 text-primary" />
                 </div>
-                <h1 className="text-2xl font-bold mt-2 tracking-tight">Welcome to EasyChat</h1>
-                <p className="text-base-content/60 font-normal">Create your account</p>
+                <h1 className="text-2xl font-bold mt-2 tracking-tight">Protected registration</h1>
+                <p className="text-base-content/60 font-normal font-mono uppercase tracking-[0.18em] text-[11px]">Identity verification</p>
               </div>
             </div>
 
@@ -69,11 +68,11 @@ const SignUpPage = () => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-base-content/40" />
+                    <UserCheck className="h-5 w-5 text-base-content/40" />
                   </div>
                   <input
                     type="text"
-                    className="input input-bordered w-full pl-10 font-normal focus:border-[#FFB800] focus:ring-[#FFB800]"
+                    className="input input-bordered w-full pl-10 font-normal focus:border-primary focus:ring-primary"
                     placeholder="John Doe"
                     value={formData.fullName}
                     onChange={(e) =>
@@ -93,7 +92,7 @@ const SignUpPage = () => {
                   </div>
                   <input
                     type="email"
-                    className="input input-bordered w-full pl-10 font-normal focus:border-[#FFB800] focus:ring-[#FFB800]"
+                    className="input input-bordered w-full pl-10 font-normal focus:border-primary focus:ring-primary"
                     placeholder="you@example.com"
                     value={formData.email}
                     onChange={(e) =>
@@ -109,11 +108,11 @@ const SignUpPage = () => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-base-content/40" />
+                    <LockKeyhole className="h-5 w-5 text-base-content/40" />
                   </div>
                   <input
                     type={showPassword ? "text" : "password"}
-                    className="input input-bordered w-full pl-10 font-normal focus:border-[#FFB800] focus:ring-[#FFB800]"
+                    className="input input-bordered w-full pl-10 font-normal focus:border-primary focus:ring-primary"
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={(e) =>
@@ -136,7 +135,7 @@ const SignUpPage = () => {
 
               <button
                 type="submit"
-                className="w-full px-4 py-2 text-white font-medium bg-[#FFB800] hover:bg-[#F2A900] rounded-lg transition-colors"
+                className="w-full px-4 py-2 text-primary-content font-medium bg-primary hover:bg-primary-focus rounded-xl transition-colors shadow-lg shadow-primary/20"
                 disabled={isSigningUp}
               >
                 {isSigningUp ? (
@@ -153,7 +152,7 @@ const SignUpPage = () => {
             <div className="text-center">
               <p className="text-base-content/60 font-normal">
                 Already have an account?{" "}
-                <Link to="/login" className="text-[#FFB800] hover:text-[#F2A900] font-medium">
+                <Link to="/login" className="text-primary hover:text-secondary font-medium transition-colors">
                   Sign in
                 </Link>
               </p>

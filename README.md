@@ -1,9 +1,11 @@
-# EasyChatWeb
+# CipherChat
+
+End-to-end, end of worries
 
 A real-time chat web application with automatic language translation, built with the MERN stack (MongoDB, Express, React, Node.js), Socket.IO, and a modern UI.
 
 ## About
-EasyChatWeb lets users chat in real time, automatically translates messages to each user's preferred language, and provides a beautiful, responsive interface. It is designed for easy deployment on free platforms like Railway (backend), Vercel (frontend), and MongoDB Atlas (database).
+CipherChat lets users chat in real time, automatically translates messages to each user's preferred language, and provides a beautiful, responsive interface. It is designed for easy deployment on free platforms like Railway (backend), Vercel (frontend), and MongoDB Atlas (database).
 
 ## Features
 - 🔒 User authentication (signup, login, JWT)
@@ -27,8 +29,8 @@ EasyChatWeb lets users chat in real time, automatically translates messages to e
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/slmaher/EasyChatWeb.git
-cd EasyChatWeb
+git clone https://github.com/slmaher/EasyChatWebApplication.git
+cd EasyChatWebApplication
 ```
 
 ### 2. Setup the Backend

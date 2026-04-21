@@ -1,4 +1,4 @@
-import { MessageSquare } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import React from "react";
 const NoChatSelected = () => {
   return (
@@ -8,18 +8,18 @@ const NoChatSelected = () => {
         <div className="flex justify-center gap-4 mb-4">
           <div className="relative">
             <div
-              className="w-16 h-16 rounded-2xl bg-[#FFB800]/10 flex items-center
+              className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center
              justify-center "
             >
-              <MessageSquare className="w-8 h-8 text-[#FFB800]" />
+              <ShieldCheck className="w-8 h-8 text-primary" />
             </div>
           </div>
         </div>
 
         {/* Welcome Text */}
-        <h2 className="text-2xl font-bold">Welcome to EasyChat!</h2>
+        <h2 className="text-2xl font-bold">Secure channel ready</h2>
         <p className="text-base-content/60">
-          No conversation selected
+          Select a contact or create a secure group from the sidebar.
         </p>
       </div>
     </div>

@@ -49,7 +49,7 @@ const App = () => {
   );
 
   return (
-    <div data-theme={theme}>
+    <div data-theme={theme} className="min-h-screen bg-base-200 text-base-content">
       <Navbar />
 
       <Routes>

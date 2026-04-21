@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "description": "End-to-end, end of worries",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

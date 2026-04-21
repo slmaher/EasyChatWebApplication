@@ -1,50 +1,48 @@
 import mongoose from "mongoose";
 import envelopeSchema from "./schemas/envelope.schema.js";
 
-const messageSchema = new mongoose.Schema(
+const groupMessageSchema = new mongoose.Schema(
   {
+    groupId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Group",
+      required: true,
+      index: true,
+    },
     senderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-    },
-    receiverId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    text: {
-      type: String,
-    },
-    image: {
-      type: String,
-    },
-    translatedText: {
-      type: String,
-    },
-    translatedTo: {
-      type: String,
-    },
-    detectedLanguage: {
-      type: String,
+      index: true,
     },
     encryption: {
       version: {
         type: Number,
+        required: true,
       },
       senderDeviceId: {
         type: String,
+        required: true,
       },
       recipientEnvelopes: {
         type: [envelopeSchema],
         default: [],
       },
-      senderEnvelope: envelopeSchema,
+      senderEnvelope: {
+        type: envelopeSchema,
+        required: true,
+      },
+    },
+    recipientDeviceCount: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true },
 );
 
-const Message = mongoose.model("Message", messageSchema);
+groupMessageSchema.index({ groupId: 1, createdAt: -1 });
 
-export default Message;
+const GroupMessage = mongoose.model("GroupMessage", groupMessageSchema);
+
+export default GroupMessage;

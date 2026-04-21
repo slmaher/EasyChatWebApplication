@@ -7,8 +7,7 @@ const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
-  const { sendMessage, setTyping, setStopTyping } = useChatStore();
-  const { selectedUser } = useChatStore();
+  const { sendMessage, sendGroupMessage, setTyping, setStopTyping, selectedUser, selectedGroup } = useChatStore();
 
   // Debounce typing event
   const typingTimeoutRef = useRef(null);
@@ -36,7 +35,7 @@ const MessageInput = () => {
 
   const handleInputChange = (e) => {
     setText(e.target.value);
-    if (selectedUser) {
+    if (selectedUser && !selectedGroup) {
       setTyping(selectedUser._id);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = setTimeout(() => {
@@ -59,10 +58,17 @@ const MessageInput = () => {
     if (sending) return;
     setSending(true);
     try {
-      await sendMessage({
-        text: text.trim(),
-        image: imagePreview,
-      });
+      if (selectedGroup?._id) {
+        await sendGroupMessage(selectedGroup._id, {
+          text: text.trim(),
+          image: imagePreview,
+        });
+      } else {
+        await sendMessage({
+          text: text.trim(),
+          image: imagePreview,
+        });
+      }
       setText("");
       setImagePreview(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -114,17 +120,19 @@ const MessageInput = () => {
 
           <button
             type="button"
-            className={`hidden sm:flex btn btn-circle
-                     ${imagePreview ? "text-emerald-500" : "text-zinc-400"}`}
+            className={`hidden sm:flex btn btn-circle btn-outline
+                       ${imagePreview ? "text-primary" : "text-zinc-400"}`}
             onClick={() => fileInputRef.current?.click()}
+              title="Attach media"
           >
             <Image size={20} />
           </button>
         </div>
         <button
           type="submit"
-          className="btn btn-sm btn-circle"
+            className="btn btn-sm btn-circle btn-primary shadow-lg shadow-primary/20"
           disabled={(!text.trim() && !imagePreview) || sending}
+            title="Send secure message"
         >
           <Send size={22} />
         </button>

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import DeviceKey from "../models/deviceKey.model.js";
+import Group from "../models/group.model.js";
 
 const MAX_PREKEYS = 200;
 
@@ -8,12 +9,21 @@ export const registerDeviceKeys = async (req, res) => {
     const userId = req.user._id;
     const { deviceId, identityKey, preKeys } = req.body;
 
-    if (!deviceId || !identityKey || !Array.isArray(preKeys) || preKeys.length === 0) {
-      return res.status(400).json({ message: "deviceId, identityKey and preKeys are required" });
+    if (
+      !deviceId ||
+      !identityKey ||
+      !Array.isArray(preKeys) ||
+      preKeys.length === 0
+    ) {
+      return res
+        .status(400)
+        .json({ message: "deviceId, identityKey and preKeys are required" });
     }
 
     if (preKeys.length > MAX_PREKEYS) {
-      return res.status(400).json({ message: `Too many prekeys. Max ${MAX_PREKEYS}` });
+      return res
+        .status(400)
+        .json({ message: `Too many prekeys. Max ${MAX_PREKEYS}` });
     }
 
     const normalizedPreKeys = preKeys
@@ -25,7 +35,9 @@ export const registerDeviceKeys = async (req, res) => {
       }));
 
     if (!normalizedPreKeys.length) {
-      return res.status(400).json({ message: "At least one valid prekey is required" });
+      return res
+        .status(400)
+        .json({ message: "At least one valid prekey is required" });
     }
 
     const existing = await DeviceKey.findOne({ userId, deviceId });
@@ -46,15 +58,21 @@ export const registerDeviceKeys = async (req, res) => {
       });
     }
 
-    const knownPreKeys = new Set(existing.preKeys.map((preKey) => preKey.keyId));
-    const keysToAppend = normalizedPreKeys.filter((preKey) => !knownPreKeys.has(preKey.keyId));
+    const knownPreKeys = new Set(
+      existing.preKeys.map((preKey) => preKey.keyId),
+    );
+    const keysToAppend = normalizedPreKeys.filter(
+      (preKey) => !knownPreKeys.has(preKey.keyId),
+    );
 
     existing.identityKey = identityKey;
     existing.preKeys.push(...keysToAppend);
     existing.lastSeenAt = new Date();
 
     if (existing.preKeys.length > MAX_PREKEYS) {
-      existing.preKeys = existing.preKeys.slice(existing.preKeys.length - MAX_PREKEYS);
+      existing.preKeys = existing.preKeys.slice(
+        existing.preKeys.length - MAX_PREKEYS,
+      );
     }
 
     await existing.save();
@@ -101,7 +119,8 @@ export const getPreKeyBundle = async (req, res) => {
 
     if (!bundles.length) {
       return res.status(404).json({
-        message: "Recipient has not registered E2EE keys yet. Ask them to log in from their device first.",
+        message:
+          "Recipient has not registered E2EE keys yet. Ask them to log in from their device first.",
         code: "RECIPIENT_E2EE_NOT_REGISTERED",
       });
     }
@@ -119,7 +138,9 @@ export const consumePreKey = async (req, res) => {
     const { deviceId, preKeyId } = req.body;
 
     if (!deviceId || !preKeyId) {
-      return res.status(400).json({ message: "deviceId and preKeyId are required" });
+      return res
+        .status(400)
+        .json({ message: "deviceId and preKeyId are required" });
     }
 
     const updated = await DeviceKey.findOneAndUpdate(
@@ -134,7 +155,7 @@ export const consumePreKey = async (req, res) => {
           lastSeenAt: new Date(),
         },
       },
-      { new: true }
+      { new: true },
     );
 
     if (!updated) {
@@ -144,6 +165,68 @@ export const consumePreKey = async (req, res) => {
     return res.status(200).json({ message: "Prekey consumed" });
   } catch (error) {
     console.error("Error in consumePreKey:", error.message);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getGroupRecipientDevices = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const requesterId = String(req.user._id);
+
+    if (!mongoose.Types.ObjectId.isValid(groupId)) {
+      return res.status(400).json({ message: "Invalid group id" });
+    }
+
+    const group = await Group.findById(groupId).lean();
+    if (!group || group.isArchived) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    const activeMembers = (group.members || []).filter((member) => !member.leftAt);
+    const requesterIsMember = activeMembers.some(
+      (member) => String(member.userId) === requesterId,
+    );
+
+    if (!requesterIsMember) {
+      return res.status(403).json({ message: "Not a member of this group" });
+    }
+
+    const recipientUserIds = activeMembers
+      .map((member) => String(member.userId))
+      .filter((memberId) => memberId !== requesterId);
+
+    if (!recipientUserIds.length) {
+      return res.status(200).json({ groupId, recipients: [] });
+    }
+
+    const recipientDevices = await DeviceKey.find({
+      userId: { $in: recipientUserIds },
+    })
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    const recipients = recipientDevices
+      .map((device) => {
+        const availablePreKey = device.preKeys.find((preKey) => !preKey.isUsed);
+
+        return {
+          userId: device.userId,
+          deviceId: device.deviceId,
+          identityKey: device.identityKey,
+          preKey: availablePreKey
+            ? {
+                keyId: availablePreKey.keyId,
+                publicKey: availablePreKey.publicKey,
+              }
+            : null,
+        };
+      })
+      .filter((item) => Boolean(item.identityKey));
+
+    return res.status(200).json({ groupId, recipients });
+  } catch (error) {
+    console.error("Error in getGroupRecipientDevices:", error.message);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

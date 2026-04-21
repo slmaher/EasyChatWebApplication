@@ -1,4 +1,4 @@
-import { Users } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 const SidebarSkeleton = () => {
   // Create 8 skeleton items
@@ -12,8 +12,8 @@ const SidebarSkeleton = () => {
       {/* Header */}
       <div className="border-b border-base-300 w-full p-5">
         <div className="flex items-center gap-2">
-          <Users className="w-6 h-6" />
-          <span className="font-medium hidden lg:block">Contacts</span>
+          <ShieldCheck className="w-6 h-6 text-primary" />
+          <span className="font-medium hidden lg:block">Secure contacts</span>
         </div>
       </div>
 

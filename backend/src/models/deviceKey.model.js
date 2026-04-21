@@ -15,7 +15,7 @@ const preKeySchema = new mongoose.Schema(
       default: false,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const deviceKeySchema = new mongoose.Schema(
@@ -43,7 +43,7 @@ const deviceKeySchema = new mongoose.Schema(
       default: Date.now,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 deviceKeySchema.index({ userId: 1, deviceId: 1 }, { unique: true });
