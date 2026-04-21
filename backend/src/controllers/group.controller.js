@@ -8,14 +8,15 @@ import GroupAuditEvent from "../models/groupAuditEvent.model.js";
 const isValidEncryptedPayload = (encryption) => {
   return Boolean(
     encryption &&
-      Array.isArray(encryption.recipientEnvelopes) &&
-      encryption.recipientEnvelopes.length > 0 &&
-      encryption.senderEnvelope &&
-      encryption.senderDeviceId,
+    Array.isArray(encryption.recipientEnvelopes) &&
+    encryption.recipientEnvelopes.length > 0 &&
+    encryption.senderEnvelope &&
+    encryption.senderDeviceId,
   );
 };
 
-const getActiveMembers = (group) => (group.members || []).filter((member) => !member.leftAt);
+const getActiveMembers = (group) =>
+  (group.members || []).filter((member) => !member.leftAt);
 
 const normalizeCandidateIds = (candidateIds = []) => {
   if (!Array.isArray(candidateIds)) return [];
@@ -47,7 +48,13 @@ const getActiveMemberById = (group, userId) => {
   );
 };
 
-const writeAuditEvent = async ({ groupId, actorUserId, targetUserId, action, metadata }) => {
+const writeAuditEvent = async ({
+  groupId,
+  actorUserId,
+  targetUserId,
+  action,
+  metadata,
+}) => {
   try {
     await GroupAuditEvent.create({
       groupId,
@@ -82,7 +89,9 @@ export const createGroup = async (req, res) => {
       ...normalizeCandidateIds(participantIds),
     ];
 
-    const normalizedMemberIds = Array.from(new Set([creatorId, ...incomingMemberIds]));
+    const normalizedMemberIds = Array.from(
+      new Set([creatorId, ...incomingMemberIds]),
+    );
 
     const invalidMemberId = normalizedMemberIds.find(
       (id) => !mongoose.Types.ObjectId.isValid(id),
@@ -91,9 +100,13 @@ export const createGroup = async (req, res) => {
       return res.status(400).json({ message: "Invalid member id provided" });
     }
 
-    const existingUsers = await User.countDocuments({ _id: { $in: normalizedMemberIds } });
+    const existingUsers = await User.countDocuments({
+      _id: { $in: normalizedMemberIds },
+    });
     if (existingUsers !== normalizedMemberIds.length) {
-      return res.status(400).json({ message: "One or more members do not exist" });
+      return res
+        .status(400)
+        .json({ message: "One or more members do not exist" });
     }
 
     const groupMembers = normalizedMemberIds.map((userId) => ({
@@ -221,7 +234,9 @@ export const sendGroupMessage = async (req, res) => {
       (envelope) => !recipientUserIdSet.has(String(envelope.recipientUserId)),
     );
     if (invalidEnvelope) {
-      return res.status(400).json({ message: "Envelope contains non-member recipient" });
+      return res
+        .status(400)
+        .json({ message: "Envelope contains non-member recipient" });
     }
 
     const groupMessage = await GroupMessage.create({
@@ -264,7 +279,9 @@ export const addGroupMembers = async (req, res) => {
     }
 
     if (!canManageMembers(group, requesterId)) {
-      return res.status(403).json({ message: "Only owner/admin can add members" });
+      return res
+        .status(403)
+        .json({ message: "Only owner/admin can add members" });
     }
 
     const candidateIds = Array.from(
@@ -286,9 +303,13 @@ export const addGroupMembers = async (req, res) => {
       return res.status(400).json({ message: "Invalid member id provided" });
     }
 
-    const existingUsers = await User.countDocuments({ _id: { $in: candidateIds } });
+    const existingUsers = await User.countDocuments({
+      _id: { $in: candidateIds },
+    });
     if (existingUsers !== candidateIds.length) {
-      return res.status(400).json({ message: "One or more members do not exist" });
+      return res
+        .status(400)
+        .json({ message: "One or more members do not exist" });
     }
 
     const activeMemberSet = new Set(
@@ -304,7 +325,12 @@ export const addGroupMembers = async (req, res) => {
     }
 
     toAdd.forEach((userId) => {
-      group.members.push({ userId, role: "member", joinedAt: new Date(), leftAt: null });
+      group.members.push({
+        userId,
+        role: "member",
+        joinedAt: new Date(),
+        leftAt: null,
+      });
     });
 
     await group.save();
@@ -363,7 +389,9 @@ export const removeGroupMember = async (req, res) => {
     const targetRole = targetMember.role;
 
     if (!isSelfRemoval && !["owner", "admin"].includes(requesterRole)) {
-      return res.status(403).json({ message: "Insufficient permission to remove member" });
+      return res
+        .status(403)
+        .json({ message: "Insufficient permission to remove member" });
     }
 
     if (targetRole === "owner") {
@@ -371,7 +399,9 @@ export const removeGroupMember = async (req, res) => {
     }
 
     if (requesterRole === "admin" && targetRole !== "member") {
-      return res.status(403).json({ message: "Admin can only remove regular members" });
+      return res
+        .status(403)
+        .json({ message: "Admin can only remove regular members" });
     }
 
     const memberIndex = group.members.findIndex(
@@ -431,7 +461,9 @@ export const updateGroupMemberRole = async (req, res) => {
 
     const requesterMember = getActiveMemberById(group, requesterId);
     if (!requesterMember || requesterMember.role !== "owner") {
-      return res.status(403).json({ message: "Only owner can change member roles" });
+      return res
+        .status(403)
+        .json({ message: "Only owner can change member roles" });
     }
 
     const targetMember = getActiveMemberById(group, memberId);
@@ -460,7 +492,8 @@ export const updateGroupMemberRole = async (req, res) => {
     group.members[targetMemberIndex].role = role;
     await group.save();
 
-    const action = role === "admin" ? "member_promoted_admin" : "member_demoted_member";
+    const action =
+      role === "admin" ? "member_promoted_admin" : "member_demoted_member";
     await writeAuditEvent({
       groupId: group._id,
       actorUserId: requesterId,

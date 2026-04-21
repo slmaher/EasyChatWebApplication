@@ -6,7 +6,8 @@ import { useBlockStore } from "../store/useBlockStore";
 import ManageGroupMembersModal from "./ManageGroupMembersModal";
 
 const ChatHeader = () => {
-  const { selectedUser, selectedGroup, setSelectedUser, setSelectedGroup } = useChatStore();
+  const { selectedUser, selectedGroup, setSelectedUser, setSelectedGroup } =
+    useChatStore();
   const { onlineUsers } = useAuthStore();
   const { blockUser, unblockUser, isUserBlocked, isBlocking } = useBlockStore();
   const [isManageMembersOpen, setIsManageMembersOpen] = React.useState(false);
@@ -95,13 +96,19 @@ const ChatHeader = () => {
           onClick={handleBlockUser}
           disabled={isBlocking}
           className={`btn btn-sm btn-outline ${
-            isUserBlocked(selectedUser?._id) 
-              ? "btn-error text-white" 
+            isUserBlocked(selectedUser?._id)
+              ? "btn-error text-white"
               : "btn-ghost"
           }`}
-          title={isUserBlocked(selectedUser?._id) ? "Unblock user" : "Block user"}
+          title={
+            isUserBlocked(selectedUser?._id) ? "Unblock user" : "Block user"
+          }
         >
-          {isUserBlocked(selectedUser?._id) ? <ShieldCheck className="size-4" /> : <ShieldOff className="size-4" />}
+          {isUserBlocked(selectedUser?._id) ? (
+            <ShieldCheck className="size-4" />
+          ) : (
+            <ShieldOff className="size-4" />
+          )}
           {isUserBlocked(selectedUser?._id) ? "Unblock" : "Block"}
         </button>
         <button

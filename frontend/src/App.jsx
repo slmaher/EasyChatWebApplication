@@ -8,7 +8,7 @@ import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
 
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuthStore } from './store/useAuthStore';
+import { useAuthStore } from "./store/useAuthStore";
 
 import { useThemeStore } from "./store/useThemeStore";
 import { useBlockStore } from "./store/useBlockStore";
@@ -42,14 +42,17 @@ const App = () => {
   console.log({ authUser });
 
   if (isCheckingAuth)
-  return (
-    <div className="flex items-center justify-center h-screen">
-      <Loader className="size-10 animate-spin" />
-    </div>
-  );
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader className="size-10 animate-spin" />
+      </div>
+    );
 
   return (
-    <div data-theme={theme} className="min-h-screen bg-base-200 text-base-content">
+    <div
+      data-theme={theme}
+      className="min-h-screen bg-base-200 text-base-content"
+    >
       <Navbar />
 
       <Routes>

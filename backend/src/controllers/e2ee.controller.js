@@ -183,7 +183,9 @@ export const getGroupRecipientDevices = async (req, res) => {
       return res.status(404).json({ message: "Group not found" });
     }
 
-    const activeMembers = (group.members || []).filter((member) => !member.leftAt);
+    const activeMembers = (group.members || []).filter(
+      (member) => !member.leftAt,
+    );
     const requesterIsMember = activeMembers.some(
       (member) => String(member.userId) === requesterId,
     );

@@ -7,7 +7,14 @@ const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
-  const { sendMessage, sendGroupMessage, setTyping, setStopTyping, selectedUser, selectedGroup } = useChatStore();
+  const {
+    sendMessage,
+    sendGroupMessage,
+    setTyping,
+    setStopTyping,
+    selectedUser,
+    selectedGroup,
+  } = useChatStore();
 
   // Debounce typing event
   const typingTimeoutRef = useRef(null);
@@ -123,16 +130,16 @@ const MessageInput = () => {
             className={`hidden sm:flex btn btn-circle btn-outline
                        ${imagePreview ? "text-primary" : "text-zinc-400"}`}
             onClick={() => fileInputRef.current?.click()}
-              title="Attach media"
+            title="Attach media"
           >
             <Image size={20} />
           </button>
         </div>
         <button
           type="submit"
-            className="btn btn-sm btn-circle btn-primary shadow-lg shadow-primary/20"
+          className="btn btn-sm btn-circle btn-primary shadow-lg shadow-primary/20"
           disabled={(!text.trim() && !imagePreview) || sending}
-            title="Send secure message"
+          title="Send secure message"
         >
           <Send size={22} />
         </button>

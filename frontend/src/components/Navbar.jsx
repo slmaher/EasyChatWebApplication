@@ -36,12 +36,18 @@ const Navbar = () => {
 
             {authUser && (
               <>
-                <Link to={"/profile"} className={`btn btn-sm btn-outline gap-2`}>
+                <Link
+                  to={"/profile"}
+                  className={`btn btn-sm btn-outline gap-2`}
+                >
                   <UserCog className="size-5" />
                   <span className="hidden sm:inline">Profile</span>
                 </Link>
 
-                <button className="btn btn-sm btn-outline flex gap-2 items-center" onClick={logout}>
+                <button
+                  className="btn btn-sm btn-outline flex gap-2 items-center"
+                  onClick={logout}
+                >
                   <LogOut className="size-5" />
                   <span className="hidden sm:inline">Logout</span>
                 </button>

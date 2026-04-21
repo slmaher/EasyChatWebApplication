@@ -206,7 +206,9 @@ export const useChatStore = create((set, get) => ({
 
       return res.data;
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to add group members");
+      toast.error(
+        error.response?.data?.message || "Failed to add group members",
+      );
       throw error;
     }
   },
@@ -311,7 +313,8 @@ export const useChatStore = create((set, get) => ({
       return decryptedMessages;
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Failed to fetch encrypted group messages",
+        error.response?.data?.message ||
+          "Failed to fetch encrypted group messages",
       );
       throw error;
     }
@@ -338,18 +341,24 @@ export const useChatStore = create((set, get) => ({
         await decryptMessageForCurrentDevice(res.data, authUser._id),
       );
 
-      set((state) => ({
-        groupMessagesById: {
-          ...state.groupMessagesById,
-          [groupId]: [
-            ...(state.groupMessagesById[groupId] || []),
-            decryptedMessage,
-          ],
-        },
-      }));
+      set((state) => {
+        const existing = state.groupMessagesById[groupId] || [];
+        const alreadyExists = existing.some(
+          (msg) => msg._id === decryptedMessage._id,
+        );
+        if (alreadyExists) return state;
+
+        return {
+          groupMessagesById: {
+            ...state.groupMessagesById,
+            [groupId]: [...existing, decryptedMessage],
+          },
+        };
+      });
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Failed to send encrypted group message",
+        error.response?.data?.message ||
+          "Failed to send encrypted group message",
       );
     }
   },
@@ -533,6 +542,12 @@ export const useChatStore = create((set, get) => ({
             );
             if (alreadyExists) return state;
 
+            const isSelectedGroupOpen =
+              state.selectedGroup?._id &&
+              String(state.selectedGroup._id) === String(groupId);
+            const isOwnMessage =
+              String(newGroupMessage.senderId) === String(authUser._id);
+
             return {
               groupMessagesById: {
                 ...state.groupMessagesById,
@@ -540,7 +555,9 @@ export const useChatStore = create((set, get) => ({
               },
               unreadGroupMessages: {
                 ...state.unreadGroupMessages,
-                [groupId]: (state.unreadGroupMessages[groupId] || 0) + 1,
+                [groupId]: isSelectedGroupOpen || isOwnMessage
+                  ? state.unreadGroupMessages[groupId] || 0
+                  : (state.unreadGroupMessages[groupId] || 0) + 1,
               },
             };
           });

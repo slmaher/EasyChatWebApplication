@@ -30,12 +30,7 @@ const ChatContainer = () => {
     } else if (selectedUser?._id) {
       getMessages(selectedUser._id);
     }
-  }, [
-    selectedUser?._id,
-    selectedGroup?._id,
-    getMessages,
-    getGroupMessages,
-  ]);
+  }, [selectedUser?._id, selectedGroup?._id, getMessages, getGroupMessages]);
 
   const activeMessages = selectedGroup?._id
     ? groupMessagesById[selectedGroup._id] || []
@@ -67,8 +62,16 @@ const ChatContainer = () => {
     };
     const ref = messageListRef.current;
     if (ref) ref.addEventListener("scroll", handleScroll);
-    return () => { if (ref) ref.removeEventListener("scroll", handleScroll); };
-  }, [selectedUser, selectedGroup, isLoadingMore, isMessagesLoading, loadMoreMessages]);
+    return () => {
+      if (ref) ref.removeEventListener("scroll", handleScroll);
+    };
+  }, [
+    selectedUser,
+    selectedGroup,
+    isLoadingMore,
+    isMessagesLoading,
+    loadMoreMessages,
+  ]);
 
   if (isMessagesLoading) {
     return (
@@ -84,9 +87,14 @@ const ChatContainer = () => {
     <div className="flex-1 flex flex-col overflow-auto">
       <ChatHeader />
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-base-100/30" ref={messageListRef}>
+      <div
+        className="flex-1 overflow-y-auto p-4 space-y-4 bg-base-100/30"
+        ref={messageListRef}
+      >
         {isLoadingMore && (
-          <div className="w-full text-center text-xs text-zinc-400 mb-2">Loading more...</div>
+          <div className="w-full text-center text-xs text-zinc-400 mb-2">
+            Loading more...
+          </div>
         )}
         {activeMessages.map((message) => (
           <div
@@ -112,7 +120,8 @@ const ChatContainer = () => {
             </div>
             <div className="chat-header mb-1">
               <time className="text-xs opacity-50 ml-1 font-mono">
-                {formatDate(message.createdAt, { format: 'short' })} {formatMessageTime(message.createdAt)}
+                {formatDate(message.createdAt, { format: "short" })}{" "}
+                {formatMessageTime(message.createdAt)}
               </time>
             </div>
             <div className="chat-bubble flex flex-col shadow-lg shadow-base-300/10 border border-base-300/40">
@@ -124,17 +133,28 @@ const ChatContainer = () => {
                 />
               )}
               {message.text && <p>{message.text}</p>}
-              {message.translatedText && message.translatedTo === authUser?.preferredLanguage && (
-                <div style={{ color: '#888', fontStyle: 'italic', fontSize: '0.95em', marginTop: 4 }}>
-                  {message.translatedText}
-                  <div style={{ fontSize: '0.8em', color: '#aaa' }}>
-                    {authUser?.preferredLanguage === 'ar' ? 'مترجم بواسطة الذكاء الاصطناعي' : 
-                     authUser?.preferredLanguage === 'fr' ? 'Traduit par IA' :
-                     authUser?.preferredLanguage === 'es' ? 'Traducido por IA' :
-                     'Translated by AI'}
+              {message.translatedText &&
+                message.translatedTo === authUser?.preferredLanguage && (
+                  <div
+                    style={{
+                      color: "#888",
+                      fontStyle: "italic",
+                      fontSize: "0.95em",
+                      marginTop: 4,
+                    }}
+                  >
+                    {message.translatedText}
+                    <div style={{ fontSize: "0.8em", color: "#aaa" }}>
+                      {authUser?.preferredLanguage === "ar"
+                        ? "مترجم بواسطة الذكاء الاصطناعي"
+                        : authUser?.preferredLanguage === "fr"
+                          ? "Traduit par IA"
+                          : authUser?.preferredLanguage === "es"
+                            ? "Traducido por IA"
+                            : "Translated by AI"}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           </div>
         ))}
@@ -142,7 +162,10 @@ const ChatContainer = () => {
 
       {/* Typing indicator */}
       {selectedUser && !selectedGroup && typingUsers[selectedUser._id] && (
-        <div className="px-4 pb-2 mt-3 text-base text-zinc-500 animate-pulse font-mono uppercase tracking-[0.14em] text-[11px]" style={{ fontWeight: 500 }}>
+        <div
+          className="px-4 pb-2 mt-3 text-base text-zinc-500 animate-pulse font-mono uppercase tracking-[0.14em] text-[11px]"
+          style={{ fontWeight: 500 }}
+        >
           {selectedUser.fullName} is typing...
         </div>
       )}

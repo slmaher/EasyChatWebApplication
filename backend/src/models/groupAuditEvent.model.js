@@ -39,6 +39,9 @@ const groupAuditEventSchema = new mongoose.Schema(
 
 groupAuditEventSchema.index({ groupId: 1, createdAt: -1 });
 
-const GroupAuditEvent = mongoose.model("GroupAuditEvent", groupAuditEventSchema);
+const GroupAuditEvent = mongoose.model(
+  "GroupAuditEvent",
+  groupAuditEventSchema,
+);
 
 export default GroupAuditEvent;

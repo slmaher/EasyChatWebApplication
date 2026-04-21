@@ -11,7 +11,11 @@ const router = express.Router();
 
 router.post("/register-device", protectRoute, registerDeviceKeys);
 router.get("/prekey-bundle/:userId", protectRoute, getPreKeyBundle);
-router.get("/group-recipient-devices/:groupId", protectRoute, getGroupRecipientDevices);
+router.get(
+  "/group-recipient-devices/:groupId",
+  protectRoute,
+  getGroupRecipientDevices,
+);
 router.post("/consume-prekey", protectRoute, consumePreKey);
 
 export default router;

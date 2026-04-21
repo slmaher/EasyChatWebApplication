@@ -45,7 +45,9 @@ const ManageGroupMembersModal = ({ isOpen, onClose, group }) => {
 
   const toggleSelectedToAdd = (userId) => {
     setSelectedToAdd((prev) =>
-      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId],
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId],
     );
   };
 
@@ -110,13 +112,17 @@ const ManageGroupMembersModal = ({ isOpen, onClose, group }) => {
             <h3 className="text-sm font-semibold">Current Members</h3>
             <div className="max-h-72 space-y-2 overflow-y-auto rounded-xl border border-base-300 p-2">
               {activeMembers.map((member) => {
-                const user = users.find((u) => String(u._id) === String(member.userId));
+                const user = users.find(
+                  (u) => String(u._id) === String(member.userId),
+                );
                 const memberId = String(member.userId);
                 const canChangeRole = isOwner && member.role !== "owner";
                 const canRemove =
                   canManage &&
                   member.role !== "owner" &&
-                  (isOwner || member.role === "member" || memberId === String(authUser?._id));
+                  (isOwner ||
+                    member.role === "member" ||
+                    memberId === String(authUser?._id));
 
                 return (
                   <div
@@ -131,8 +137,14 @@ const ManageGroupMembersModal = ({ isOpen, onClose, group }) => {
                           className="size-8 rounded-full object-cover"
                         />
                         <div>
-                          <div className="text-sm font-medium">{user?.fullName || memberId}</div>
-                          <div className={roleBadgeClass[member.role] || "badge"}>{member.role}</div>
+                          <div className="text-sm font-medium">
+                            {user?.fullName || memberId}
+                          </div>
+                          <div
+                            className={roleBadgeClass[member.role] || "badge"}
+                          >
+                            {member.role}
+                          </div>
                         </div>
                       </div>
 
@@ -201,7 +213,9 @@ const ManageGroupMembersModal = ({ isOpen, onClose, group }) => {
                 </label>
               ))}
               {!usersAvailableToAdd.length && (
-                <div className="text-xs text-base-content/60">No available users to add.</div>
+                <div className="text-xs text-base-content/60">
+                  No available users to add.
+                </div>
               )}
             </div>
             <button
@@ -217,7 +231,10 @@ const ManageGroupMembersModal = ({ isOpen, onClose, group }) => {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Audit Events</h3>
-              <button className="btn btn-xs btn-outline" onClick={handleLoadAudit}>
+              <button
+                className="btn btn-xs btn-outline"
+                onClick={handleLoadAudit}
+              >
                 Refresh
               </button>
             </div>
@@ -228,7 +245,10 @@ const ManageGroupMembersModal = ({ isOpen, onClose, group }) => {
                 </p>
               )}
               {auditEvents.map((event) => (
-                <div key={event._id} className="rounded-lg border border-base-300 p-2">
+                <div
+                  key={event._id}
+                  className="rounded-lg border border-base-300 p-2"
+                >
                   <div className="text-xs font-mono uppercase tracking-[0.1em] text-primary">
                     {event.action.replaceAll("_", " ")}
                   </div>

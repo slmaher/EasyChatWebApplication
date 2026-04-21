@@ -28,7 +28,7 @@ const ProfilePage = () => {
     }
 
     // Check file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
     if (!allowedTypes.includes(file.type)) {
       toast.error("Please select a valid image file (JPEG, PNG, or GIF)");
       return;
@@ -61,7 +61,7 @@ const ProfilePage = () => {
     try {
       console.log("Starting image upload process...");
       const loadingToast = toast.loading("Updating profile picture...");
-      
+
       // Ensure we're not already in the process of updating
       if (isUpdatingProfile) {
         toast.dismiss(loadingToast);
@@ -73,25 +73,27 @@ const ProfilePage = () => {
       console.log("Sending request to update profile...");
       await updateProfile({ profilePic: tempImg });
       console.log("Profile update request completed");
-      
+
       toast.dismiss(loadingToast);
       toast.success("Profile picture updated successfully");
-      
+
       // Update the selected image after successful upload
       setSelectedImg(tempImg);
       console.log("Local state updated with new image");
-      
+
       // Clear the temp image
       setTempImg(null);
-      
     } catch (error) {
       console.error("Error updating profile picture:", error);
       console.error("Error details:", {
         message: error.message,
         response: error.response?.data,
-        status: error.response?.status
+        status: error.response?.status,
       });
-      toast.error(error.response?.data?.message || "Failed to update profile picture. Please try again.");
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to update profile picture. Please try again.",
+      );
       setTempImg(null); // Clear temp image on error
     }
   };
@@ -105,7 +107,9 @@ const ProfilePage = () => {
               <ShieldCheck className="size-6 text-primary" />
               Security profile
             </h1>
-            <p className="mt-2 text-base-content/70">Your protected account information</p>
+            <p className="mt-2 text-base-content/70">
+              Your protected account information
+            </p>
           </div>
 
           {/* avatar upload section */}
@@ -117,14 +121,22 @@ const ProfilePage = () => {
             })()}
             <div className="relative">
               <img
-                src={tempImg || selectedImg || authUser?.profilePic || "/NoAvatar.png"}
+                src={
+                  tempImg ||
+                  selectedImg ||
+                  authUser?.profilePic ||
+                  "/NoAvatar.png"
+                }
                 alt="Profile"
                 className="size-32 rounded-full object-cover border-4"
                 onError={(e) => {
-                  if (e.target.src !== window.location.origin + "/NoAvatar.png" && e.target.src !== "/NoAvatar.png") {
-                  console.error("Error loading image, using fallback");
-                  e.target.onerror = null; // Prevent infinite loop
-                  e.target.src = "/NoAvatar.png";
+                  if (
+                    e.target.src !== window.location.origin + "/NoAvatar.png" &&
+                    e.target.src !== "/NoAvatar.png"
+                  ) {
+                    console.error("Error loading image, using fallback");
+                    e.target.onerror = null; // Prevent infinite loop
+                    e.target.src = "/NoAvatar.png";
                   }
                 }}
               />
@@ -162,8 +174,8 @@ const ProfilePage = () => {
               {isUpdatingProfile
                 ? "Uploading..."
                 : tempImg
-                ? "Click Save to update your photo"
-                : "Click the camera icon to select a photo"}
+                  ? "Click Save to update your photo"
+                  : "Click the camera icon to select a photo"}
             </p>
           </div>
 
@@ -197,11 +209,15 @@ const ProfilePage = () => {
               <select
                 className="px-4 py-2.5 bg-base-200 rounded-xl border border-base-300/80 w-full"
                 value={authUser?.preferredLanguage || "en"}
-                onChange={e => updateProfile({ preferredLanguage: e.target.value })}
+                onChange={(e) =>
+                  updateProfile({ preferredLanguage: e.target.value })
+                }
                 disabled={isUpdatingProfile}
               >
-                {languages.map(lang => (
-                  <option key={lang.code} value={lang.code}>{lang.label}</option>
+                {languages.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.label}
+                  </option>
                 ))}
               </select>
             </div>
