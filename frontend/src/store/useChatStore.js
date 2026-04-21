@@ -555,9 +555,10 @@ export const useChatStore = create((set, get) => ({
               },
               unreadGroupMessages: {
                 ...state.unreadGroupMessages,
-                [groupId]: isSelectedGroupOpen || isOwnMessage
-                  ? state.unreadGroupMessages[groupId] || 0
-                  : (state.unreadGroupMessages[groupId] || 0) + 1,
+                [groupId]:
+                  isSelectedGroupOpen || isOwnMessage
+                    ? state.unreadGroupMessages[groupId] || 0
+                    : (state.unreadGroupMessages[groupId] || 0) + 1,
               },
             };
           });

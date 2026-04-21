@@ -10,6 +10,7 @@ import MessageSkeleton from "./skeletons/MessageSkeleton";
 const ChatContainer = () => {
   const {
     messages,
+    users,
     getMessages,
     getGroupMessages,
     isMessagesLoading,
@@ -35,6 +36,22 @@ const ChatContainer = () => {
   const activeMessages = selectedGroup?._id
     ? groupMessagesById[selectedGroup._id] || []
     : messages;
+
+  const getSenderId = (message) => {
+    if (!message?.senderId) return "";
+    return typeof message.senderId === "object"
+      ? String(message.senderId._id || "")
+      : String(message.senderId);
+  };
+
+  const getGroupSenderName = (message) => {
+    const senderId = getSenderId(message);
+    if (!senderId) return "Unknown member";
+    if (senderId === String(authUser?._id)) return "You";
+
+    const senderUser = users.find((user) => String(user._id) === senderId);
+    return senderUser?.fullName || "Unknown member";
+  };
 
   useEffect(() => {
     if (messageEndRef.current && messages) {
@@ -100,7 +117,9 @@ const ChatContainer = () => {
           <div
             key={message._id}
             className={`chat ${
-              message.senderId === authUser._id ? "chat-end" : "chat-start"
+              getSenderId(message) === String(authUser?._id)
+                ? "chat-end"
+                : "chat-start"
             }`}
             ref={messageEndRef}
           >
@@ -108,7 +127,7 @@ const ChatContainer = () => {
               <div className="size-10 rounded-full border">
                 <img
                   src={
-                    message.senderId === authUser._id
+                    getSenderId(message) === String(authUser?._id)
                       ? authUser.profilePic || "/NoAvatar.png"
                       : selectedGroup?._id
                         ? "/NoAvatar.png"
@@ -119,6 +138,11 @@ const ChatContainer = () => {
               </div>
             </div>
             <div className="chat-header mb-1">
+              {selectedGroup?._id && (
+                <span className="text-[11px] font-semibold text-primary mr-2">
+                  {getGroupSenderName(message)}
+                </span>
+              )}
               <time className="text-xs opacity-50 ml-1 font-mono">
                 {formatDate(message.createdAt, { format: "short" })}{" "}
                 {formatMessageTime(message.createdAt)}
