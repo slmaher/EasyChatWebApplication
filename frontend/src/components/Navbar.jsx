@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
-import { LogOut, ShieldCheck, UserCog } from "lucide-react";
+import { LogOut, ShieldCheck, UserCog, BarChart3 } from "lucide-react";
 import React from "react";
 import ThemeToggle from "./ThemeToggle";
 
@@ -36,6 +36,17 @@ const Navbar = () => {
 
             {authUser && (
               <>
+                {authUser.role === "admin" && (
+                  <Link
+                    to={"/admin"}
+                    className={`btn btn-sm btn-outline gap-2`}
+                    title="Admin Dashboard"
+                  >
+                    <BarChart3 className="size-5" />
+                    <span className="hidden sm:inline">Admin</span>
+                  </Link>
+                )}
+
                 <Link
                   to={"/profile"}
                   className={`btn btn-sm btn-outline gap-2`}

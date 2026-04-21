@@ -2,6 +2,7 @@ import { generateToken } from "../lib/utils.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js";
+import Logger from "../lib/logger.js";
 
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -18,7 +19,12 @@ export const signup = async (req, res) => {
 
     const user = await User.findOne({ email });
 
-    if (user) return res.status(400).json({ message: "Email already exists" });
+    if (user) {
+      await Logger.logAuthEvent("user_signup", null, email, false, req.ip, req.headers["user-agent"], {
+        reason: "Email already exists",
+      });
+      return res.status(400).json({ message: "Email already exists" });
+    }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -33,17 +39,21 @@ export const signup = async (req, res) => {
       generateToken(newUser._id, res);
       await newUser.save();
 
+      await Logger.logAuthEvent("user_signup", newUser._id, email, true, req.ip, req.headers["user-agent"]);
+
       res.status(201).json({
         _id: newUser._id,
         fullName: newUser.fullName,
         email: newUser.email,
         profilePic: newUser.profilePic,
+        role: newUser.role,
       });
     } else {
       res.status(400).json({ message: "Invalid user data" });
     }
   } catch (error) {
     console.log("Error in signup controller", error.message);
+    await Logger.logError("api_error", "Signup error", error.stack, null, "/auth/signup", 500);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -54,30 +64,43 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
+      await Logger.logAuthEvent("user_login", null, email, false, req.ip, req.headers["user-agent"], {
+        reason: "User not found",
+      });
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
+      await Logger.logAuthEvent("user_login", user._id, email, false, req.ip, req.headers["user-agent"], {
+        reason: "Invalid password",
+      });
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     generateToken(user._id, res);
+
+    await Logger.logAuthEvent("user_login", user._id, email, true, req.ip, req.headers["user-agent"]);
 
     res.status(200).json({
       _id: user._id,
       fullName: user.fullName,
       email: user.email,
       profilePic: user.profilePic,
+      role: user.role,
     });
   } catch (error) {
     console.log("Error in login controller", error.message);
+    await Logger.logError("api_error", "Login error", error.stack, null, "/auth/login", 500);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-export const logout = (req, res) => {
+export const logout = async (req, res) => {
   try {
+    if (req.user) {
+      await Logger.logAuthEvent("user_logout", req.user._id, req.user.email, true, req.ip, req.headers["user-agent"]);
+    }
     res.cookie("jwt", "", { maxAge: 0 });
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {

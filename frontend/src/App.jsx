@@ -6,6 +6,7 @@ import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
 
 import ProfilePage from "./pages/ProfilePage";
+import AdminDashboard from "./pages/AdminDashboard";
 
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/useAuthStore";
@@ -71,6 +72,10 @@ const App = () => {
         <Route
           path="/profile"
           element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/admin"
+          element={authUser?.role === "admin" ? <AdminDashboard /> : <Navigate to="/" />}
         />
       </Routes>
 

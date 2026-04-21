@@ -1,3 +1,4 @@
+import { apiLoggingMiddleware } from "./middleware/logging.middleware.js";
 import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
@@ -12,6 +13,7 @@ import messageRoutes from "./routes/message.route.js";
 import blockRoutes from "./routes/block.route.js";
 import e2eeRoutes from "./routes/e2ee.route.js";
 import groupRoutes from "./routes/group.route.js";
+import appLogRoutes from "./routes/appLog.route.js";
 import { app, server } from "./lib/socket.js";
 
 dotenv.config();
@@ -35,11 +37,15 @@ app.use(
   }),
 );
 
+// Apply API logging middleware
+app.use(apiLoggingMiddleware);
+
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/blocks", blockRoutes);
 app.use("/api/e2ee", e2eeRoutes);
 app.use("/api/groups", groupRoutes);
+app.use("/api/logs", appLogRoutes);
 
 app.get("/", (req, res) => {
   res.send("Backend is working!");
