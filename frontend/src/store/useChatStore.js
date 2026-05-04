@@ -7,6 +7,7 @@ import {
   encryptGroupMessage,
   encryptPayloadForUser,
 } from "../lib/e2ee";
+import { attachTranslation } from "../lib/translation";
 
 const withDisplayFields = (message) => ({
   ...message,
@@ -41,9 +42,9 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  getMessages: async (userId) => {
+  getMessages: async (userId, { forceRefresh = false } = {}) => {
     const { messagesByUser } = get();
-    if (messagesByUser[userId]) {
+    if (messagesByUser[userId] && !forceRefresh) {
       set({ messages: messagesByUser[userId], isMessagesLoading: false });
       return;
     }
@@ -55,8 +56,11 @@ export const useChatStore = create((set, get) => ({
       const { authUser } = useAuthStore.getState();
       const decryptedMessages = await Promise.all(
         res.data.map(async (message) =>
-          withDisplayFields(
-            await decryptMessageForCurrentDevice(message, authUser._id),
+          attachTranslation(
+            withDisplayFields(
+              await decryptMessageForCurrentDevice(message, authUser._id),
+            ),
+            authUser?.preferredLanguage || "en",
           ),
         ),
       );
@@ -84,8 +88,11 @@ export const useChatStore = create((set, get) => ({
       const { authUser } = useAuthStore.getState();
       const decryptedMessages = await Promise.all(
         res.data.map(async (message) =>
-          withDisplayFields(
-            await decryptMessageForCurrentDevice(message, authUser._id),
+          attachTranslation(
+            withDisplayFields(
+              await decryptMessageForCurrentDevice(message, authUser._id),
+            ),
+            authUser?.preferredLanguage || "en",
           ),
         ),
       );
@@ -129,19 +136,23 @@ export const useChatStore = create((set, get) => ({
       const decryptedMessage = withDisplayFields(
         await decryptMessageForCurrentDevice(res.data, authUser._id),
       );
+      const translatedMessage = await attachTranslation(
+        decryptedMessage,
+        authUser?.preferredLanguage || "en",
+      );
 
       set((state) => {
         const alreadyExists = state.messages.some(
-          (msg) => msg._id === decryptedMessage._id,
+          (msg) => msg._id === translatedMessage._id,
         );
         if (alreadyExists) return state;
         return {
-          messages: [...state.messages, decryptedMessage],
+          messages: [...state.messages, translatedMessage],
           messagesByUser: {
             ...state.messagesByUser,
             [selectedUser._id]: [
               ...(state.messagesByUser[selectedUser._id] || []),
-              decryptedMessage,
+              translatedMessage,
             ],
           },
         };
@@ -284,16 +295,26 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  getGroupMessages: async (groupId, { limit = 30, skip = 0 } = {}) => {
+  getGroupMessages: async (groupId, { limit = 30, skip = 0, forceRefresh = false } = {}) => {
     try {
+      if (!skip && !forceRefresh) {
+        const cachedMessages = get().groupMessagesById[groupId];
+        if (cachedMessages) {
+          return cachedMessages;
+        }
+      }
+
       const res = await axiosInstance.get(
         `/groups/${groupId}/messages?limit=${limit}&skip=${skip}`,
       );
       const { authUser } = useAuthStore.getState();
       const decryptedMessages = await Promise.all(
         (res.data || []).map(async (message) =>
-          withDisplayFields(
-            await decryptMessageForCurrentDevice(message, authUser._id),
+          attachTranslation(
+            withDisplayFields(
+              await decryptMessageForCurrentDevice(message, authUser._id),
+            ),
+            authUser?.preferredLanguage || "en",
           ),
         ),
       );
@@ -340,18 +361,22 @@ export const useChatStore = create((set, get) => ({
       const decryptedMessage = withDisplayFields(
         await decryptMessageForCurrentDevice(res.data, authUser._id),
       );
+      const translatedMessage = await attachTranslation(
+        decryptedMessage,
+        authUser?.preferredLanguage || "en",
+      );
 
       set((state) => {
         const existing = state.groupMessagesById[groupId] || [];
         const alreadyExists = existing.some(
-          (msg) => msg._id === decryptedMessage._id,
+          (msg) => msg._id === translatedMessage._id,
         );
         if (alreadyExists) return state;
 
         return {
           groupMessagesById: {
             ...state.groupMessagesById,
-            [groupId]: [...existing, decryptedMessage],
+            [groupId]: [...existing, translatedMessage],
           },
         };
       });
@@ -377,26 +402,28 @@ export const useChatStore = create((set, get) => ({
       decryptMessageForCurrentDevice(newMessage, authUser._id).then(
         (decrypted) => {
           const displayMessage = withDisplayFields(decrypted);
-          if (selectedUser && newMessage.senderId === selectedUser._id) {
-            set((state) => ({
-              messages: [...state.messages, displayMessage],
-              messagesByUser: {
-                ...state.messagesByUser,
-                [selectedUser._id]: [
-                  ...(state.messagesByUser[selectedUser._id] || []),
-                  displayMessage,
-                ],
-              },
-            }));
-          } else {
-            set((state) => ({
-              unreadMessages: {
-                ...state.unreadMessages,
-                [newMessage.senderId]:
-                  (state.unreadMessages[newMessage.senderId] || 0) + 1,
-              },
-            }));
-          }
+          attachTranslation(displayMessage, authUser?.preferredLanguage || "en").then((translatedMessage) => {
+            if (selectedUser && newMessage.senderId === selectedUser._id) {
+              set((state) => ({
+                messages: [...state.messages, translatedMessage],
+                messagesByUser: {
+                  ...state.messagesByUser,
+                  [selectedUser._id]: [
+                    ...(state.messagesByUser[selectedUser._id] || []),
+                    translatedMessage,
+                  ],
+                },
+              }));
+            } else {
+              set((state) => ({
+                unreadMessages: {
+                  ...state.unreadMessages,
+                  [newMessage.senderId]:
+                    (state.unreadMessages[newMessage.senderId] || 0) + 1,
+                },
+              }));
+            }
+          });
         },
       );
     });
@@ -476,26 +503,30 @@ export const useChatStore = create((set, get) => ({
       decryptMessageForCurrentDevice(newMessage, authUser._id).then(
         (decrypted) => {
           const displayMessage = withDisplayFields(decrypted);
-          if (selectedUser && newMessage.senderId === selectedUser._id) {
-            set((state) => ({
-              messages: [...state.messages, displayMessage],
-              messagesByUser: {
-                ...state.messagesByUser,
-                [selectedUser._id]: [
-                  ...(state.messagesByUser[selectedUser._id] || []),
-                  displayMessage,
-                ],
-              },
-            }));
-          } else {
-            set((state) => ({
-              unreadMessages: {
-                ...state.unreadMessages,
-                [newMessage.senderId]:
-                  (state.unreadMessages[newMessage.senderId] || 0) + 1,
-              },
-            }));
-          }
+          attachTranslation(displayMessage, authUser?.preferredLanguage || "en").then(
+            (translatedMessage) => {
+              if (selectedUser && newMessage.senderId === selectedUser._id) {
+                set((state) => ({
+                  messages: [...state.messages, translatedMessage],
+                  messagesByUser: {
+                    ...state.messagesByUser,
+                    [selectedUser._id]: [
+                      ...(state.messagesByUser[selectedUser._id] || []),
+                      translatedMessage,
+                    ],
+                  },
+                }));
+              } else {
+                set((state) => ({
+                  unreadMessages: {
+                    ...state.unreadMessages,
+                    [newMessage.senderId]:
+                      (state.unreadMessages[newMessage.senderId] || 0) + 1,
+                  },
+                }));
+              }
+            },
+          );
         },
       );
     });
@@ -535,33 +566,37 @@ export const useChatStore = create((set, get) => ({
           const groupId = newGroupMessage.groupId;
           if (!groupId) return;
 
-          set((state) => {
-            const existing = state.groupMessagesById[groupId] || [];
-            const alreadyExists = existing.some(
-              (msg) => msg._id === displayMessage._id,
-            );
-            if (alreadyExists) return state;
+          attachTranslation(displayMessage, authUser?.preferredLanguage || "en").then(
+            (translatedMessage) => {
+              set((state) => {
+                const existing = state.groupMessagesById[groupId] || [];
+                const alreadyExists = existing.some(
+                  (msg) => msg._id === translatedMessage._id,
+                );
+                if (alreadyExists) return state;
 
-            const isSelectedGroupOpen =
-              state.selectedGroup?._id &&
-              String(state.selectedGroup._id) === String(groupId);
-            const isOwnMessage =
-              String(newGroupMessage.senderId) === String(authUser._id);
+                const isSelectedGroupOpen =
+                  state.selectedGroup?._id &&
+                  String(state.selectedGroup._id) === String(groupId);
+                const isOwnMessage =
+                  String(newGroupMessage.senderId) === String(authUser._id);
 
-            return {
-              groupMessagesById: {
-                ...state.groupMessagesById,
-                [groupId]: [...existing, displayMessage],
-              },
-              unreadGroupMessages: {
-                ...state.unreadGroupMessages,
-                [groupId]:
-                  isSelectedGroupOpen || isOwnMessage
-                    ? state.unreadGroupMessages[groupId] || 0
-                    : (state.unreadGroupMessages[groupId] || 0) + 1,
-              },
-            };
-          });
+                return {
+                  groupMessagesById: {
+                    ...state.groupMessagesById,
+                    [groupId]: [...existing, translatedMessage],
+                  },
+                  unreadGroupMessages: {
+                    ...state.unreadGroupMessages,
+                    [groupId]:
+                      isSelectedGroupOpen || isOwnMessage
+                        ? state.unreadGroupMessages[groupId] || 0
+                        : (state.unreadGroupMessages[groupId] || 0) + 1,
+                  },
+                };
+              });
+            },
+          );
         },
       );
     });

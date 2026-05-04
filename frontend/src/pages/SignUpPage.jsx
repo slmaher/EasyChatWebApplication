@@ -51,15 +51,13 @@ const SignUpPage = () => {
             {/* Logo */}
             <div className="text-center mb-8">
               <div className="flex flex-col items-center gap-2 group">
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors ring-1 ring-primary/15">
+                <div
+                  className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors ring-1 ring-primary/15"
+                >
                   <ShieldCheck className="w-7 h-7 text-primary" />
                 </div>
-                <h1 className="text-2xl font-bold mt-2 tracking-tight">
-                  Protected registration
-                </h1>
-                <p className="text-base-content/60 font-normal font-mono uppercase tracking-[0.18em] text-[11px]">
-                  Identity verification
-                </p>
+                <h1 className="text-2xl font-bold mt-2 tracking-tight">Protected registration</h1>
+                <p className="text-base-content/60 font-normal font-mono uppercase tracking-[0.18em] text-[11px]">Identity verification</p>
               </div>
             </div>
 
@@ -154,10 +152,7 @@ const SignUpPage = () => {
             <div className="text-center">
               <p className="text-base-content/60 font-normal">
                 Already have an account?{" "}
-                <Link
-                  to="/login"
-                  className="text-primary hover:text-secondary font-medium transition-colors"
-                >
+                <Link to="/login" className="text-primary hover:text-secondary font-medium transition-colors">
                   Sign in
                 </Link>
               </p>

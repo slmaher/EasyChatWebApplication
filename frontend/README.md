@@ -1,8 +1,32 @@
-# React + Vite
+# CipherChat Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This directory contains the React single-page application for CipherChat.
 
-Currently, two official plugins are available:
+## Run locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+npm install
+npm run dev
+```
+
+## Environment
+
+Create a `frontend/.env` file with:
+
+```env
+VITE_API_URL=http://localhost:5001
+```
+
+## What this app includes
+
+- Authentication screens for sign up and sign in.
+- The main chat workspace with contacts, messages, typing indicators, and attachments.
+- Profile settings for avatar and preferred language.
+- Admin dashboard for logs, statistics, and maintenance tasks.
+
+## Helpful scripts
+
+- `npm run dev`
+- `npm run build`
+- `npm run preview`
+- `npm run lint`

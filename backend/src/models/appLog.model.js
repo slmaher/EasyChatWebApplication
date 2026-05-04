@@ -80,7 +80,7 @@ const appLogSchema = new mongoose.Schema(
       default: null,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 appLogSchema.index({ createdAt: 1 });

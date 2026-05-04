@@ -3,8 +3,15 @@ import User from "../models/user.model.js";
 
 export const getAppLogs = async (req, res) => {
   try {
-    const { page = 1, limit = 50, type, severity, startDate, endDate, userId } =
-      req.query;
+    const {
+      page = 1,
+      limit = 50,
+      type,
+      severity,
+      startDate,
+      endDate,
+      userId,
+    } = req.query;
     const skip = (page - 1) * limit;
 
     let filter = {};
@@ -49,7 +56,9 @@ export const searchLogs = async (req, res) => {
     const skip = (page - 1) * limit;
 
     if (!query) {
-      return res.status(400).json({ success: false, message: "Query required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Query required" });
     }
 
     const logs = await AppLog.find({
@@ -122,17 +131,17 @@ export const getLogStats = async (req, res) => {
     // Error rate
     const totalLogs = logs.length;
     const errorLogs = logs.filter(
-      (log) => log.severity === "error" || log.severity === "critical"
+      (log) => log.severity === "error" || log.severity === "critical",
     ).length;
-    const errorRate = totalLogs > 0 ? ((errorLogs / totalLogs) * 100).toFixed(2) : 0;
+    const errorRate =
+      totalLogs > 0 ? ((errorLogs / totalLogs) * 100).toFixed(2) : 0;
 
     // Top errors
     const errorMessages = {};
     logs
       .filter((log) => log.severity === "error" || log.severity === "critical")
       .forEach((log) => {
-        errorMessages[log.message] =
-          (errorMessages[log.message] || 0) + 1;
+        errorMessages[log.message] = (errorMessages[log.message] || 0) + 1;
       });
 
     const topErrors = Object.entries(errorMessages)
@@ -169,7 +178,9 @@ export const getLogStats = async (req, res) => {
     });
   } catch (error) {
     console.error("Error getting log stats:", error);
-    res.status(500).json({ success: false, message: "Error getting statistics" });
+    res
+      .status(500)
+      .json({ success: false, message: "Error getting statistics" });
   }
 };
 
@@ -183,7 +194,9 @@ export const deleteLog = async (req, res) => {
       return res.status(404).json({ success: false, message: "Log not found" });
     }
 
-    res.status(200).json({ success: true, message: "Log deleted successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Log deleted successfully" });
   } catch (error) {
     console.error("Error deleting log:", error);
     res.status(500).json({ success: false, message: "Error deleting log" });
@@ -265,7 +278,11 @@ const convertToCSV = (logs) => {
 
   let csv = headers.map((h) => `"${h}"`).join(",") + "\n";
   csv += rows
-    .map((row) => row.map((cell) => `"${String(cell || "").replace(/"/g, '""')}"`).join(","))
+    .map((row) =>
+      row
+        .map((cell) => `"${String(cell || "").replace(/"/g, '""')}"`)
+        .join(","),
+    )
     .join("\n");
 
   return csv;

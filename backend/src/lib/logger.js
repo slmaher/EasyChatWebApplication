@@ -44,7 +44,7 @@ class Logger {
     success,
     ipAddress,
     userAgent,
-    metadata = {}
+    metadata = {},
   ) {
     const severity = success ? "info" : "warning";
     const message = `Authentication ${type}: ${userEmail || userId}`;
@@ -67,7 +67,7 @@ class Logger {
     action,
     metadata = {},
     ipAddress = null,
-    userAgent = null
+    userAgent = null,
   ) {
     const severity = "info";
     const message = `User action: ${action}`;
@@ -91,7 +91,7 @@ class Logger {
     endpoint = null,
     statusCode = 500,
     metadata = {},
-    ipAddress = null
+    ipAddress = null,
   ) {
     const severity = statusCode >= 500 ? "critical" : "error";
     await this.log({
@@ -115,7 +115,7 @@ class Logger {
     userId = null,
     ipAddress = null,
     userAgent = null,
-    error = null
+    error = null,
   ) {
     const type = statusCode >= 400 ? "api_error" : "other";
     const severity = statusCode >= 500 ? "error" : "info";
@@ -165,7 +165,7 @@ class Logger {
     message,
     userId = null,
     metadata = {},
-    ipAddress = null
+    ipAddress = null,
   ) {
     await this.log({
       type: "security_event",

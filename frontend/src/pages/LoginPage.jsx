@@ -1,14 +1,7 @@
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  Eye,
-  EyeOff,
-  Loader2,
-  LockKeyhole,
-  Mail,
-  ShieldCheck,
-} from "lucide-react";
+import { Eye, EyeOff, Loader2, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import React from "react";
 
 const LoginPage = () => {
@@ -36,15 +29,13 @@ const LoginPage = () => {
               {/* Logo */}
               <div className="text-center mb-8">
                 <div className="flex flex-col items-center gap-2 group">
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors ring-1 ring-primary/15">
+                  <div
+                    className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors ring-1 ring-primary/15"
+                  >
                     <ShieldCheck className="w-7 h-7 text-primary" />
                   </div>
-                  <h1 className="text-2xl font-bold mt-2 tracking-tight">
-                    Secure sign in
-                  </h1>
-                  <p className="text-base-content/60 font-normal font-mono uppercase tracking-[0.18em] text-[11px]">
-                    Encrypted access portal
-                  </p>
+                  <h1 className="text-2xl font-bold mt-2 tracking-tight">Secure sign in</h1>
+                  <p className="text-base-content/60 font-normal font-mono uppercase tracking-[0.18em] text-[11px]">Encrypted access portal</p>
                 </div>
               </div>
 
@@ -119,10 +110,7 @@ const LoginPage = () => {
               <div className="text-center">
                 <p className="text-base-content/60 font-normal">
                   Don&apos;t have an account?{" "}
-                  <Link
-                    to="/signup"
-                    className="text-primary hover:text-secondary font-medium transition-colors"
-                  >
+                  <Link to="/signup" className="text-primary hover:text-secondary font-medium transition-colors">
                     Create account
                   </Link>
                 </p>
@@ -131,6 +119,7 @@ const LoginPage = () => {
           </div>
 
           {/* Image */}
+         
         </div>
       </div>
     </div>

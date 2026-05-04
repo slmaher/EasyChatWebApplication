@@ -1,7 +1,9 @@
 import Logger from "../lib/logger.js";
 
 const getClientIP = (req) => {
-  return req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
+  return (
+    req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress
+  );
 };
 
 // Error logging middleware
@@ -28,7 +30,7 @@ export const errorLoggingMiddleware = async (err, req, res, next) => {
       errorName: err.name,
       method: req.method,
     },
-    clientIP
+    clientIP,
   );
 
   next(err);
@@ -57,7 +59,7 @@ export const apiLoggingMiddleware = async (req, res, next) => {
         req.user?._id,
         clientIP,
         userAgent,
-        error
+        error,
       ).catch((err) => console.error("Logging error:", err));
     }
 

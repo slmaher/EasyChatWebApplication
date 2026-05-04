@@ -20,9 +20,17 @@ export const signup = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user) {
-      await Logger.logAuthEvent("user_signup", null, email, false, req.ip, req.headers["user-agent"], {
-        reason: "Email already exists",
-      });
+      await Logger.logAuthEvent(
+        "user_signup",
+        null,
+        email,
+        false,
+        req.ip,
+        req.headers["user-agent"],
+        {
+          reason: "Email already exists",
+        },
+      );
       return res.status(400).json({ message: "Email already exists" });
     }
 
@@ -39,7 +47,14 @@ export const signup = async (req, res) => {
       generateToken(newUser._id, res);
       await newUser.save();
 
-      await Logger.logAuthEvent("user_signup", newUser._id, email, true, req.ip, req.headers["user-agent"]);
+      await Logger.logAuthEvent(
+        "user_signup",
+        newUser._id,
+        email,
+        true,
+        req.ip,
+        req.headers["user-agent"],
+      );
 
       res.status(201).json({
         _id: newUser._id,
@@ -53,7 +68,14 @@ export const signup = async (req, res) => {
     }
   } catch (error) {
     console.log("Error in signup controller", error.message);
-    await Logger.logError("api_error", "Signup error", error.stack, null, "/auth/signup", 500);
+    await Logger.logError(
+      "api_error",
+      "Signup error",
+      error.stack,
+      null,
+      "/auth/signup",
+      500,
+    );
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -64,23 +86,46 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      await Logger.logAuthEvent("user_login", null, email, false, req.ip, req.headers["user-agent"], {
-        reason: "User not found",
-      });
+      await Logger.logAuthEvent(
+        "user_login",
+        null,
+        email,
+        false,
+        req.ip,
+        req.headers["user-agent"],
+        {
+          reason: "User not found",
+        },
+      );
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
-      await Logger.logAuthEvent("user_login", user._id, email, false, req.ip, req.headers["user-agent"], {
-        reason: "Invalid password",
-      });
+      await Logger.logAuthEvent(
+        "user_login",
+        user._id,
+        email,
+        false,
+        req.ip,
+        req.headers["user-agent"],
+        {
+          reason: "Invalid password",
+        },
+      );
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     generateToken(user._id, res);
 
-    await Logger.logAuthEvent("user_login", user._id, email, true, req.ip, req.headers["user-agent"]);
+    await Logger.logAuthEvent(
+      "user_login",
+      user._id,
+      email,
+      true,
+      req.ip,
+      req.headers["user-agent"],
+    );
 
     res.status(200).json({
       _id: user._id,
@@ -91,7 +136,14 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.log("Error in login controller", error.message);
-    await Logger.logError("api_error", "Login error", error.stack, null, "/auth/login", 500);
+    await Logger.logError(
+      "api_error",
+      "Login error",
+      error.stack,
+      null,
+      "/auth/login",
+      500,
+    );
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -99,7 +151,14 @@ export const login = async (req, res) => {
 export const logout = async (req, res) => {
   try {
     if (req.user) {
-      await Logger.logAuthEvent("user_logout", req.user._id, req.user.email, true, req.ip, req.headers["user-agent"]);
+      await Logger.logAuthEvent(
+        "user_logout",
+        req.user._id,
+        req.user.email,
+        true,
+        req.ip,
+        req.headers["user-agent"],
+      );
     }
     res.cookie("jwt", "", { maxAge: 0 });
     res.status(200).json({ message: "Logged out successfully" });
@@ -118,41 +177,46 @@ export const updateProfile = async (req, res) => {
     if (req.body.profilePic) {
       try {
         // Log Cloudinary configuration
-        console.log('Cloudinary Config:', {
-          cloudName: process.env.CLOUDINARY_CLOUD_NAME ? 'Set' : 'Not Set',
-          apiKey: process.env.CLOUDINARY_API_KEY ? 'Set' : 'Not Set',
-          apiSecret: process.env.CLOUDINARY_API_SECRET ? 'Set' : 'Not Set'
+        console.log("Cloudinary Config:", {
+          cloudName: process.env.CLOUDINARY_CLOUD_NAME ? "Set" : "Not Set",
+          apiKey: process.env.CLOUDINARY_API_KEY ? "Set" : "Not Set",
+          apiSecret: process.env.CLOUDINARY_API_SECRET ? "Set" : "Not Set",
         });
 
         // Ensure we have the base64 data
-        const base64Data = req.body.profilePic.includes('base64,') ? req.body.profilePic.split('base64,')[1] : req.body.profilePic;
+        const base64Data = req.body.profilePic.includes("base64,")
+          ? req.body.profilePic.split("base64,")[1]
+          : req.body.profilePic;
 
         // Upload to Cloudinary with proper options
         const uploadResponse = await cloudinary.uploader.upload(
           `data:image/jpeg;base64,${base64Data}`,
           {
-            folder: 'profile_pics',
-            resource_type: 'auto',
-            format: 'jpg',
+            folder: "profile_pics",
+            resource_type: "auto",
+            format: "jpg",
             transformation: [
-              { width: 500, height: 500, crop: 'fill' },
-              { quality: 'auto' }
+              { width: 500, height: 500, crop: "fill" },
+              { quality: "auto" },
             ],
-            timeout: 60000 // Increase timeout to 60 seconds
-          }
+            timeout: 60000, // Increase timeout to 60 seconds
+          },
         );
 
         if (!uploadResponse || !uploadResponse.secure_url) {
-          throw new Error('Failed to get secure URL from Cloudinary');
+          throw new Error("Failed to get secure URL from Cloudinary");
         }
 
         updateFields.profilePic = uploadResponse.secure_url;
       } catch (uploadError) {
-        console.error('Detailed upload error:', uploadError);
-        console.error('Detailed upload error (stringified):', JSON.stringify(uploadError, null, 2));
-        return res.status(500).json({ 
+        console.error("Detailed upload error:", uploadError);
+        console.error(
+          "Detailed upload error (stringified):",
+          JSON.stringify(uploadError, null, 2),
+        );
+        return res.status(500).json({
           message: "Failed to upload image",
-          error: uploadError.message 
+          error: uploadError.message,
         });
       }
     }
@@ -163,11 +227,9 @@ export const updateProfile = async (req, res) => {
     }
 
     if (Object.keys(updateFields).length > 0) {
-      const updatedUser = await User.findByIdAndUpdate(
-        userId,
-        updateFields,
-        { new: true }
-      ).select('-password');
+      const updatedUser = await User.findByIdAndUpdate(userId, updateFields, {
+        new: true,
+      }).select("-password");
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -177,8 +239,10 @@ export const updateProfile = async (req, res) => {
     // If no valid fields provided
     return res.status(400).json({ message: "No valid fields to update" });
   } catch (error) {
-    console.error('Error in updateProfile:', error);
-    res.status(500).json({ message: "Internal server error", error: error.message });
+    console.error("Error in updateProfile:", error);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 

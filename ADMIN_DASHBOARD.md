@@ -24,11 +24,12 @@ To promote an existing user to admin, use MongoDB directly or through the API:
 // Using MongoDB directly
 db.users.updateOne(
   { email: "your-email@example.com" },
-  { $set: { role: "admin" } }
-)
+  { $set: { role: "admin" } },
+);
 ```
 
 Or manually update in your database management tool:
+
 - Set the `role` field to "admin" for the user
 
 ### 2. Accessing the Dashboard
@@ -44,6 +45,7 @@ Or manually update in your database management tool:
 ### 📋 Logs Tab
 
 #### View Logs
+
 - See all application logs with detailed information
 - Each log entry shows:
   - Timestamp
@@ -54,12 +56,14 @@ Or manually update in your database management tool:
   - Action buttons
 
 #### Filter Logs
+
 - **By Type**: Login, logout, signup, API errors, server errors, etc.
 - **By Severity**: Info, warning, error, critical
 - **By Date Range**: Specify start and end dates
 - **By User**: Filter logs for specific users
 
 #### Search Logs
+
 - Use the search bar to find logs containing specific keywords
 - Searches across:
   - Log messages
@@ -68,15 +72,18 @@ Or manually update in your database management tool:
   - Error details
 
 #### Export Logs
+
 - Download filtered logs as CSV file
 - CSV includes: date, type, severity, message, user, email, endpoint, status code, duration
 - Useful for reports and external analysis
 
 #### Delete Logs
+
 - Remove individual logs using the "Delete" button
 - Logs are permanently removed from database
 
 #### Pagination
+
 - Navigate through large log sets
 - View total log count
 - Customize items per page
@@ -84,6 +91,7 @@ Or manually update in your database management tool:
 ### 📊 Statistics Tab
 
 #### Key Metrics
+
 - **Total Logs**: Number of logs in selected period
 - **Errors**: Count of error and critical logs
 - **Error Rate**: Percentage of error logs
@@ -104,46 +112,55 @@ Or manually update in your database management tool:
    - Shows if errors are increasing or decreasing
 
 #### Date Range Selection
+
 - Select predefined periods: Last 7, 30, or 90 days
 - Charts update automatically when period changes
 
 #### Top Errors List
+
 - Shows most frequently occurring errors
 - Helps identify recurring issues that need attention
 
 ### 🛠️ Tools Tab
 
 #### Refresh Data
+
 - Manually reload logs and statistics
 - Useful when you want to see latest data
 
 #### Clear Old Logs
+
 - Delete logs older than specified number of days
 - Helps manage database size
 - **Warning**: Action is permanent
 - Prevents database bloat from old historical data
 
 #### Export Logs
+
 - Quick access to download CSV file
 - Use current filter settings
 
 #### View Statistics
+
 - Quick link to statistics tab
 
 ## Logged Events
 
 ### Authentication Events
+
 - `user_signup` - New user registration
 - `user_login` - User login attempts
 - `user_logout` - User logout
 - `auth_failed` - Failed authentication
 
 ### User Actions
+
 - `user_deleted` - User account deleted
 - `block_user` - User blocked another user
 - `unblock_user` - User unblocked another user
 
 ### Messaging Events
+
 - `message_sent` - Message sent
 - `message_deleted` - Message deleted
 - `group_created` - Group created
@@ -151,6 +168,7 @@ Or manually update in your database management tool:
 - `member_removed` - Member removed from group
 
 ### System Events
+
 - `api_error` - API endpoint error
 - `database_error` - Database operation error
 - `validation_error` - Input validation failed
@@ -161,6 +179,7 @@ Or manually update in your database management tool:
 ### Log Fields
 
 Each log entry contains:
+
 - **type**: Event type (see above)
 - **severity**: info, warning, error, or critical
 - **message**: Human-readable description
@@ -179,24 +198,28 @@ Each log entry contains:
 ## Usage Examples
 
 ### Finding Failed Login Attempts
+
 1. Go to Logs tab
 2. Filter by Type = "auth_failed"
 3. Optional: Add date range to narrow results
 4. Review failed login attempts
 
 ### Analyzing API Performance
+
 1. Go to Statistics tab
 2. Select desired time period
 3. View charts showing error trends
 4. Export to CSV for detailed analysis
 
 ### Cleaning Up Old Data
+
 1. Go to Tools tab
 2. Click "Clear Old Logs"
 3. Enter number of days (e.g., 90)
 4. Click "Delete" to remove logs older than 90 days
 
 ### Investigating Errors
+
 1. Go to Statistics tab
 2. Check "Top Errors" list
 3. Identify most common errors
@@ -214,21 +237,25 @@ Each log entry contains:
 ## Troubleshooting
 
 ### Can't Access Admin Dashboard?
+
 - Verify your user has `role: "admin"` in database
 - Check that you're logged in
 - Clear browser cache and try again
 
 ### No Logs Appearing?
+
 - Check if application is generating events (try login/logout)
 - Wait a few seconds for logs to be written to database
 - Try refreshing the page or clicking "Refresh Data" button
 
 ### Statistics Not Loading?
+
 - Ensure there are logs in the database
 - Try narrowing the date range
 - Check browser console for errors
 
 ### Export Not Working?
+
 - Disable browser pop-up blocker
 - Check internet connection
 - Try exporting with fewer filters
@@ -247,6 +274,7 @@ POST /api/logs/clear-old - Delete old logs
 ```
 
 ### Query Parameters for GET /api/logs
+
 - `page`: Page number (default: 1)
 - `limit`: Items per page (default: 50)
 - `type`: Filter by event type
@@ -258,18 +286,22 @@ POST /api/logs/clear-old - Delete old logs
 ## Database Considerations
 
 ### Indexes
+
 Logs are indexed on:
+
 - `createdAt` - For sorting and date range queries
 - `type` - For filtering by event type
 - `severity` - For severity level filtering
 - `userId` - For finding user-specific logs
 
 ### Storage
+
 - Each log entry is relatively small (~1KB average)
 - 10,000 logs = ~10MB
 - Plan for monthly cleanup to manage database size
 
 ### Performance
+
 - Pagination is recommended for large datasets
 - Use date filters to limit result sets
 - Consider archiving very old logs periodically
@@ -285,6 +317,7 @@ Logs are indexed on:
 ## Future Enhancements
 
 Potential improvements:
+
 - Real-time log streaming via WebSocket
 - Email alerts for critical errors
 - Log retention policies

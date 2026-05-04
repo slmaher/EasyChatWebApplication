@@ -1,7 +1,21 @@
 import { useEffect, useState } from "react";
 import { useAdminStore } from "../store/useAdminStore";
 import { useAuthStore } from "../store/useAuthStore";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
 const COLORS = ["#3b82f6", "#ef4444", "#f59e0b", "#10b981"];
 const SEVERITY_COLORS = {
@@ -50,7 +64,9 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-500">Access Denied</h1>
-          <p className="text-gray-500 mt-2">Only admins can access this dashboard.</p>
+          <p className="text-gray-500 mt-2">
+            Only admins can access this dashboard.
+          </p>
         </div>
       </div>
     );
@@ -86,8 +102,12 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-primary mb-2">Admin Dashboard</h1>
-          <p className="text-gray-500">Application logs, errors, and statistics</p>
+          <h1 className="text-4xl font-bold text-primary mb-2">
+            Admin Dashboard
+          </h1>
+          <p className="text-gray-500">
+            Application logs, errors, and statistics
+          </p>
         </div>
 
         {/* Tabs */}
@@ -182,7 +202,9 @@ export default function AdminDashboard() {
                 type="date"
                 className="input input-bordered"
                 value={filters.startDate || ""}
-                onChange={(e) => handleFilterChange("startDate", e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange("startDate", e.target.value)
+                }
               />
 
               <input
@@ -280,7 +302,9 @@ export default function AdminDashboard() {
                 </div>
                 <button
                   className="btn btn-sm"
-                  onClick={() => setPage(Math.min(pagination.pages, pagination.page + 1))}
+                  onClick={() =>
+                    setPage(Math.min(pagination.pages, pagination.page + 1))
+                  }
                   disabled={pagination.page === pagination.pages}
                 >
                   Next
@@ -331,7 +355,9 @@ export default function AdminDashboard() {
                   </div>
                   <div className="stat bg-base-200 rounded-lg">
                     <div className="stat-title">Errors</div>
-                    <div className="stat-value text-error">{stats.errorLogs}</div>
+                    <div className="stat-value text-error">
+                      {stats.errorLogs}
+                    </div>
                   </div>
                   <div className="stat bg-base-200 rounded-lg">
                     <div className="stat-title">Error Rate</div>
@@ -356,7 +382,7 @@ export default function AdminDashboard() {
                       <PieChart>
                         <Pie
                           data={Object.entries(stats.countBySeverity).map(
-                            ([name, value]) => ({ name, value })
+                            ([name, value]) => ({ name, value }),
                           )}
                           cx="50%"
                           cy="50%"
@@ -366,9 +392,14 @@ export default function AdminDashboard() {
                           fill="#8884d8"
                           dataKey="value"
                         >
-                          {Object.keys(stats.countBySeverity).map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index]} />
-                          ))}
+                          {Object.keys(stats.countBySeverity).map(
+                            (_, index) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={COLORS[index]}
+                              />
+                            ),
+                          )}
                         </Pie>
                         <Tooltip />
                       </PieChart>
@@ -386,7 +417,12 @@ export default function AdminDashboard() {
                           .map(([name, value]) => ({ name, value }))}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
+                        <XAxis
+                          dataKey="name"
+                          angle={-45}
+                          textAnchor="end"
+                          height={80}
+                        />
                         <YAxis />
                         <Tooltip />
                         <Bar dataKey="value" fill="#3b82f6" />
@@ -401,7 +437,9 @@ export default function AdminDashboard() {
                       <ResponsiveContainer width="100%" height={300}>
                         <LineChart
                           data={Object.entries(stats.errorsByDate)
-                            .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+                            .sort(([dateA], [dateB]) =>
+                              dateA.localeCompare(dateB),
+                            )
                             .map(([date, count]) => ({ date, count }))}
                         >
                           <CartesianGrid strokeDasharray="3 3" />
@@ -431,8 +469,12 @@ export default function AdminDashboard() {
                           key={index}
                           className="flex justify-between items-center p-2 bg-base-100 rounded"
                         >
-                          <span className="text-sm truncate">{error.message}</span>
-                          <span className="badge badge-error">{error.count}</span>
+                          <span className="text-sm truncate">
+                            {error.message}
+                          </span>
+                          <span className="badge badge-error">
+                            {error.count}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -528,8 +570,8 @@ export default function AdminDashboard() {
             {/* Info Panel */}
             <div className="alert alert-info">
               <span>
-                ℹ️ These tools help you manage your application logs. Use them carefully
-                to maintain optimal database performance.
+                ℹ️ These tools help you manage your application logs. Use them
+                carefully to maintain optimal database performance.
               </span>
             </div>
           </div>
@@ -541,9 +583,7 @@ export default function AdminDashboard() {
         <div className="modal modal-open">
           <div className="modal-box">
             <h3 className="font-bold text-lg">Clear Old Logs</h3>
-            <p className="py-4">
-              Delete all logs older than:
-            </p>
+            <p className="py-4">Delete all logs older than:</p>
             <div className="form-control">
               <label className="label">
                 <span className="label-text">Number of days</span>
