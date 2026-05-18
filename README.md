@@ -1,6 +1,6 @@
 # CipherChat
 
-CipherChat is a secure real-time messaging app built with the MERN stack, Socket.IO, and a privacy-first UI. It supports encrypted message envelopes, per-device keys, automatic translation, profile management, and an admin log dashboard for operational visibility.
+CipherChat is a secure real-time(E2EE) messaging app built with the MERN stack, Socket.IO, and a privacy-first UI. It supports encrypted message envelopes, per-device keys, Group Chatting , profile management, and an admin log dashboard for operational visibility.
 
 ## Overview
 
@@ -14,7 +14,7 @@ The current design emphasizes security and trust. The UI uses shield/lock-style 
 ## Core Features
 
 - User signup, login, and JWT-based session handling.
-- Real-time one-to-one chat with Socket.IO.
+- Real-time one-to-one and One-to-Many chat with Socket.IO.
 - End-to-end encryption using browser WebCrypto and device-specific keys.
 - Message translation based on the user’s preferred language.
 - Image attachments with Cloudinary uploads.
